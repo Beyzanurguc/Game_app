@@ -118,7 +118,7 @@ final badgeCatalog = <BadgeDef>[
   BadgeDef(
     id: 'all_games',
     title: 'Her Oyundan Tat',
-    description: 'Üç oyunun da en az üçer turunu oyna.',
+    description: 'Her oyunun en az üçer turunu oyna.',
     icon: Icons.grid_view_rounded,
     group: BadgeGroup.oyun,
     target: GameKind.values.length,

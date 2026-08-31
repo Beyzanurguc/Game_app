@@ -63,7 +63,7 @@ void main() {
     );
   });
 
-  test('üç oyunu da oynamak "Her Oyundan Tat" rozetini açar', () {
+  test('her oyunu üçer kez oynamak "Her Oyundan Tat" rozetini açar', () {
     final profile = PlayerProfile();
     for (final kind in GameKind.values) {
       for (var i = 0; i < 3; i++) {
@@ -80,7 +80,25 @@ void main() {
     final context = contextWith(profile: profile);
 
     expect(statusOf(context, 'all_games').earned, isTrue);
-    expect(statusOf(context, 'ten_games').earned, isFalse, reason: '9 oyun');
+  });
+
+  test('bir oyun türü eksikse "Her Oyundan Tat" açılmaz', () {
+    final profile = PlayerProfile();
+    for (final kind in GameKind.values.skip(1)) {
+      for (var i = 0; i < 3; i++) {
+        profile.recordGame(
+          GameSummary(
+            kind: kind,
+            points: 50,
+            stars: 1,
+            elapsed: const Duration(minutes: 1),
+          ),
+        );
+      }
+    }
+    final context = contextWith(profile: profile);
+
+    expect(statusOf(context, 'all_games').earned, isFalse);
   });
 
   test('kart rozetlerinin hedefi deste uzunluğudur', () {

@@ -5,7 +5,8 @@ import 'package:flutter/widgets.dart';
 enum GameKind {
   tetris('Tetris'),
   sudoku('Sudoku'),
-  blok('Blok Patlat');
+  blok('Blok Patlat'),
+  quiz('Quiz');
 
   const GameKind(this.label);
 
