@@ -6,7 +6,8 @@ enum GameKind {
   tetris('Tetris'),
   sudoku('Sudoku'),
   blok('Blok Patlat'),
-  quiz('Quiz');
+  quiz('Quiz'),
+  yapboz('Yapboz');
 
   const GameKind(this.label);
 
