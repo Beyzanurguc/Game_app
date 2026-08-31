@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "58870948419",
+    "project_id": "foxy-f429b",
+    "storage_bucket": "foxy-f429b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:58870948419:android:bae0ff640e877980d46af6",
+        "android_client_info": {
+          "package_name": "com.example.game_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDk8VeoLD3wvRhRT-_HJpnXujtHxPTIWYk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

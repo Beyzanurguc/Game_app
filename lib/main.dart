@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'cards/card_collection.dart';
 import 'cards/card_storage.dart';
 import 'home_screen.dart';
@@ -9,9 +8,12 @@ import 'settings/app_settings.dart';
 import 'settings/settings_storage.dart';
 import 'settings/welcome_screen.dart';
 import 'theme/app_theme.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Kayıtlı kartlar, yıldızlar, oyuncu profili ve ayarlar açılışta okunur.
   final collection = await CardCollection.restore(

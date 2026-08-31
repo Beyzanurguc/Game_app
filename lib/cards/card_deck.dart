@@ -1,12 +1,5 @@
 import 'info_card.dart';
 
-/// Uygulamadaki bilgi kartı destesi.
-///
-/// Deste çevre ağırlıklıdır: 100 kartın 40 tanesi Çevre kategorisinde.
-///
-/// Yeni kart eklemek için listeye bir [InfoCard] eklemek yeterli; albümdeki
-/// toplam sayı, kategori filtreleri ve "hepsi toplandı" durumu kendiliğinden
-/// güncellenir.
 const List<InfoCard> cardDeck = [
   // --- Çevre -------------------------------------------------------------
   InfoCard(
