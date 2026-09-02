@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:game_app/cards/card_deck.dart';
-import 'package:game_app/games/quiz/quiz_bank.dart';
+import 'package:game_app/cards/info_card.dart';
 import 'package:game_app/games/quiz/quiz_screen.dart';
 
+import 'fixtures/test_cards.dart';
 import 'helpers.dart';
 
 /// Quiz ekranını, dört şıkkın tamamı ekrana sığacak bir görünümde açar.
@@ -23,10 +23,10 @@ Future<void> pumpQuiz(WidgetTester tester, {required int collected}) async {
   await tester.pump(const Duration(milliseconds: 400));
 }
 
-/// Ekranda görünen soruyu bankada bulur.
-MapEntry<String, QuizItem> visibleItem(WidgetTester tester) {
-  final match = quizBank.entries.where(
-    (entry) => find.text(entry.value.prompt).evaluate().isNotEmpty,
+/// Ekranda görünen sorunun kartını destede bulur.
+InfoCard visibleCard(WidgetTester tester) {
+  final match = testDeck.where(
+    (card) => find.text(card.quiz!.prompt).evaluate().isNotEmpty,
   );
   expect(match, hasLength(1), reason: 'ekranda tam bir soru görünmeli');
   return match.first;
@@ -37,8 +37,8 @@ void main() {
     // Sadece ilk kart toplanmış olsun.
     await pumpQuiz(tester, collected: 1);
 
-    final firstCard = cardDeck.first;
-    expect(find.text(quizBank[firstCard.id]!.prompt), findsOneWidget);
+    final firstCard = testDeck.first;
+    expect(find.text(firstCard.quiz!.prompt), findsOneWidget);
     expect(find.text(firstCard.title), findsOneWidget);
     expect(find.text('Soru 1 / 10'), findsOneWidget);
   });
@@ -46,7 +46,7 @@ void main() {
   testWidgets('şıklar o soruya ait dört seçenektir', (tester) async {
     await pumpQuiz(tester, collected: 1);
 
-    final item = visibleItem(tester).value;
+    final item = visibleCard(tester).quiz!;
     expect(find.text(item.correctAnswer), findsOneWidget);
     for (final distractor in item.distractors) {
       expect(find.text(distractor), findsOneWidget);
@@ -58,10 +58,9 @@ void main() {
   ) async {
     await pumpQuiz(tester, collected: 1);
 
-    final entry = visibleItem(tester);
-    final card = cardDeck.firstWhere((c) => c.id == entry.key);
+    final card = visibleCard(tester);
 
-    await tester.tap(find.text(entry.value.correctAnswer));
+    await tester.tap(find.text(card.quiz!.correctAnswer));
     await tester.pump();
     await tester.tap(find.text('CEVABI KONTROL ET'));
     await tester.pump();
@@ -78,7 +77,7 @@ void main() {
   testWidgets('yanlış şıkta doğru cevap gösterilir', (tester) async {
     await pumpQuiz(tester, collected: 1);
 
-    final item = visibleItem(tester).value;
+    final item = visibleCard(tester).quiz!;
 
     await tester.tap(find.text(item.distractors.first));
     await tester.pump();
@@ -93,7 +92,7 @@ void main() {
   testWidgets('sonraki soru düğmesi yeni bir soru getirir', (tester) async {
     await pumpQuiz(tester, collected: 4);
 
-    final first = visibleItem(tester).value;
+    final first = visibleCard(tester).quiz!;
 
     await tester.tap(find.text(first.correctAnswer));
     await tester.pump();
@@ -105,8 +104,8 @@ void main() {
 
     expect(find.text('Soru 2 / 10'), findsOneWidget);
     expect(find.text(first.prompt), findsNothing);
-    // Yeni soru da bankadan gelmeli.
-    visibleItem(tester);
+    // Yeni soru da destedeki bir karttan gelmeli.
+    visibleCard(tester);
   });
 
   testWidgets('toplanmamış karttan gelen soru "yeni bilgi" olarak işaretlenir', (

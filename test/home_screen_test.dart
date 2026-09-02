@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_app/cards/card_collection.dart';
-import 'package:game_app/cards/card_deck.dart';
 import 'package:game_app/home_screen.dart';
 import 'package:game_app/profile/player_profile.dart';
 import 'package:game_app/settings/app_settings.dart';
 
+import 'fixtures/test_cards.dart';
 import 'helpers.dart';
 
 Future<void> pumpHome(
@@ -75,7 +75,7 @@ void main() {
       await pumpHome(tester, collection: testCollection(collected: 3));
 
       expect(find.text('Bilgi albümüm'), findsOneWidget);
-      expect(find.text('3 / ${cardDeck.length} kart toplandı'), findsOneWidget);
+      expect(find.text('3 / ${testDeck.length} kart toplandı'), findsOneWidget);
 
       // Sıralama: önce günlük oyun kartı, sonra albüm kartı.
       final daily = tester
@@ -120,13 +120,13 @@ void main() {
     });
 
     testWidgets('rozet kazanılınca kutlama penceresi düşer', (tester) async {
-      final collection = CardCollection(collected: const []);
+      final collection = CardCollection(deck: testDeck, collected: const []);
       await pumpHome(tester, collection: collection);
 
       expect(find.text('Yeni rozet kazandın!'), findsNothing);
 
       // İlk kart toplanınca "Meraklı Tilki" rozeti açılır.
-      collection.save(cardDeck.first);
+      collection.save(testDeck.first);
       await tester.pumpAndSettle();
 
       expect(find.text('Yeni rozet kazandın!'), findsOneWidget);
@@ -143,16 +143,16 @@ void main() {
     });
 
     testWidgets('aynı rozet ikinci kez kutlanmaz', (tester) async {
-      final collection = CardCollection(collected: const []);
+      final collection = CardCollection(deck: testDeck, collected: const []);
       await pumpHome(tester, collection: collection);
 
-      collection.save(cardDeck.first);
+      collection.save(testDeck.first);
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('badge_unlocked_ok')));
       await tester.pumpAndSettle();
 
       // Yeni kart rozeti açmıyor; pencere de tekrar gelmiyor.
-      collection.save(cardDeck[1]);
+      collection.save(testDeck[1]);
       await tester.pumpAndSettle();
 
       expect(find.text('Yeni rozet kazandın!'), findsNothing);

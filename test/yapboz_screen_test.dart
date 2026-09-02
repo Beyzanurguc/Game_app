@@ -1,13 +1,10 @@
-import 'dart:io';
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:game_app/games/yapboz/puzzle_catalog.dart';
 import 'package:game_app/games/yapboz/yapboz_board.dart';
 import 'package:game_app/games/yapboz/yapboz_engine.dart';
 import 'package:game_app/games/yapboz/yapboz_screen.dart';
 
+import 'fixtures/test_puzzles.dart';
 import 'helpers.dart';
 
 Future<void> pumpYapboz(WidgetTester tester) async {
@@ -37,73 +34,12 @@ Future<void> scrollToSetupItem(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
-  group('puzzleCatalog', () {
-    test('her resmin dosyası diskte var', () {
-      final missing = puzzlePictures
-          .where((p) => !File(p.asset).existsSync())
-          .map((p) => p.asset)
-          .toList();
-      expect(missing, isEmpty, reason: 'eksik yapboz görseli');
-    });
-
-    test('asset yolları pubspec içindeki klasörün altında', () {
-      for (final picture in puzzlePictures) {
-        expect(
-          picture.asset,
-          startsWith('assets/images/puzzles/'),
-          reason: picture.id,
-        );
-      }
-    });
-
-    testWidgets('her resim kare ve 1200 piksel', (tester) async {
-      // Yapboz ızgarası kare; kare olmayan bir görsel tahtada sessizce
-      // kırpılır. tools/prepare_puzzle_images.py bunu baştan halleder, bu test
-      // de betiği çalıştırmayı unutmayı yakalar.
-      // Görsel çözme gerçek async gerektirir; testWidgets'in sahte saati
-      // altında asılı kalır, bu yüzden runAsync şart.
-      final sizes = await tester.runAsync(() async {
-        final result = <String, (int, int)>{};
-        for (final picture in puzzlePictures) {
-          final bytes = await File(picture.asset).readAsBytes();
-          final codec = await ui.instantiateImageCodec(bytes);
-          final frame = await codec.getNextFrame();
-          result[picture.id] = (frame.image.width, frame.image.height);
-          frame.image.dispose();
-          codec.dispose();
-        }
-        return result;
-      });
-
-      for (final entry in sizes!.entries) {
-        final (width, height) = entry.value;
-        expect(
-          width,
-          height,
-          reason: '${entry.key} kare değil (${width}x$height)',
-        );
-        expect(width, 1200, reason: entry.key);
-      }
-    });
-
-    test('kimlikler ve başlıklar benzersiz', () {
-      expect(
-        puzzlePictures.map((p) => p.id).toSet(),
-        hasLength(puzzlePictures.length),
-      );
-      expect(
-        puzzlePictures.map((p) => p.title).toSet(),
-        hasLength(puzzlePictures.length),
-      );
-    });
-  });
-
   group('YapbozScreen', () {
     testWidgets('önce resim ve zorluk seçimi gösterilir', (tester) async {
       await pumpYapboz(tester);
 
       expect(find.text('Hangi resmi yapalım?'), findsOneWidget);
-      expect(find.text(puzzlePictures.first.title), findsOneWidget);
+      expect(find.text(testPuzzles.first.title), findsOneWidget);
       // Başla düğmesi sabit alt çubukta; kaydırmadan görünür.
       expect(find.text('BAŞLA'), findsOneWidget);
 
@@ -125,7 +61,7 @@ void main() {
       await tester.pump();
 
       // Başlık seçilen resmin adı olur.
-      expect(find.text(puzzlePictures.first.title), findsOneWidget);
+      expect(find.text(testPuzzles.first.title), findsOneWidget);
       expect(find.text('Yerine oturan: 0 / 9'), findsOneWidget);
       expect(find.text('Parçalar'), findsOneWidget);
       expect(find.byKey(const ValueKey('yapboz_hint')), findsOneWidget);

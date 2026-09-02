@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_app/cards/album_screen.dart';
 import 'package:game_app/cards/card_collection.dart';
-import 'package:game_app/cards/card_deck.dart';
 import 'package:game_app/cards/info_card.dart';
 import 'package:game_app/cards/reward_card_screen.dart';
 import 'package:game_app/games/game_summary.dart';
 
+import 'fixtures/test_cards.dart';
 import 'helpers.dart';
 
 const _summary = GameSummary(
@@ -60,73 +60,39 @@ Future<void> scrollTo(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
-  group('Kart destesi', () {
-    test('her kartın kimliği tekil ve içeriği dolu', () {
-      final ids = cardDeck.map((card) => card.id).toSet();
-      expect(ids.length, cardDeck.length);
-
-      for (final card in cardDeck) {
-        expect(card.title, isNotEmpty, reason: card.id);
-        expect(card.question, isNotEmpty, reason: card.id);
-        expect(card.answer, isNotEmpty, reason: card.id);
-        expect(card.facts, isNotEmpty, reason: card.id);
-        expect(card.emoji, isNotEmpty, reason: card.id);
-      }
-    });
-
-    test('her kategoride en az bir kart var', () {
-      for (final category in CardCategory.values) {
-        expect(
-          cardDeck.where((card) => card.category == category),
-          isNotEmpty,
-          reason: category.label,
-        );
-      }
-    });
-
-    test('deste 100 kart ve çevre ağırlıklı', () {
-      expect(cardDeck.length, 100);
-
-      final cevre = cardDeck
-          .where((card) => card.category == CardCategory.cevre)
-          .length;
-      for (final category in CardCategory.values) {
-        if (category == CardCategory.cevre) continue;
-        expect(
-          cardDeck.where((card) => card.category == category).length,
-          lessThan(cevre),
-          reason: category.label,
-        );
-      }
-    });
-  });
+  // Gerçek içerik artık uygulamada değil, Firestore'da. İçeriğin doğruluğu
+  // (100 kart, kategori dağılımı, dolu alanlar) `seed_test.dart` içinde
+  // `seed/cards.json` üzerinden kontrol edilir. Buradaki testler yalnızca
+  // koleksiyon davranışına bakar.
 
   group('CardCollection', () {
     test('ilerleme toplanan kart sayısını yansıtır', () {
       final collection = testCollection(collected: 3);
 
       expect(collection.collectedCount, 3);
-      expect(collection.total, cardDeck.length);
-      expect(collection.progress, 3 / cardDeck.length);
-      expect(collection.isCollected(cardDeck.first.id), isTrue);
-      expect(collection.isCollected(cardDeck.last.id), isFalse);
+      expect(collection.total, testDeck.length);
+      expect(collection.progress, 3 / testDeck.length);
+      expect(collection.isCollected(testDeck.first.id), isTrue);
+      expect(collection.isCollected(testDeck.last.id), isFalse);
     });
 
     test('drawReward toplanmamış bir kartı yeni olarak verir', () {
       final collection = CardCollection(
-        collected: cardDeck.take(cardDeck.length - 1).map((c) => c.id),
+        deck: testDeck,
+        collected: testDeck.take(testDeck.length - 1).map((c) => c.id),
         random: Random(1),
       );
 
       final draw = collection.drawReward();
-      expect(draw.card.id, cardDeck.last.id);
+      expect(draw.card.id, testDeck.last.id);
       expect(draw.isNew, isTrue);
       expect(collection.isComplete, isFalse);
     });
 
     test('deste bitince kart tekrar bilgisi olarak döner', () {
       final collection = CardCollection(
-        collected: cardDeck.map((c) => c.id),
+        deck: testDeck,
+        collected: testDeck.map((c) => c.id),
         random: Random(1),
       );
 
@@ -141,8 +107,8 @@ void main() {
       var notifications = 0;
       collection.addListener(() => notifications++);
 
-      expect(collection.save(cardDeck.first), isTrue);
-      expect(collection.save(cardDeck.first), isFalse);
+      expect(collection.save(testDeck.first), isTrue);
+      expect(collection.save(testDeck.first), isFalse);
       expect(collection.collectedCount, 1);
       expect(notifications, 1);
     });
@@ -163,14 +129,14 @@ void main() {
 
       expect(uzay, isNotEmpty);
       expect(uzay.every((c) => c.category == CardCategory.uzay), isTrue);
-      expect(collection.byCategory(null).length, cardDeck.length);
+      expect(collection.byCategory(null).length, testDeck.length);
     });
   });
 
   group('Ödül ekranı', () {
     testWidgets('skor, kart ve butonlar görünür', (tester) async {
       final collection = testCollection();
-      final card = cardDeck.last;
+      final card = testDeck.last;
       await pumpReward(tester, collection, card: card);
 
       expect(find.text('Skorun: 240'), findsOneWidget);
@@ -182,7 +148,7 @@ void main() {
 
     testWidgets('"Biraz daha anlat" bilgileri açar', (tester) async {
       final collection = testCollection();
-      final card = cardDeck.last;
+      final card = testDeck.last;
       await pumpReward(tester, collection, card: card);
 
       expect(find.text('Biliyor muydun?'), findsNothing);
@@ -198,7 +164,7 @@ void main() {
 
     testWidgets('Kartı Kaydet kartı albüme ekler', (tester) async {
       final collection = testCollection();
-      final card = cardDeck.last;
+      final card = testDeck.last;
       await pumpReward(tester, collection, card: card);
 
       expect(collection.isCollected(card.id), isFalse);
@@ -215,7 +181,7 @@ void main() {
       tester,
     ) async {
       final collection = testCollection();
-      final card = cardDeck.last;
+      final card = testDeck.last;
       await pumpReward(tester, collection, card: card);
 
       await tester.tap(find.byKey(const ValueKey('reward_close')));
@@ -235,7 +201,8 @@ void main() {
       tester,
     ) async {
       final collection = CardCollection(
-        collected: cardDeck.map((c) => c.id),
+        deck: testDeck,
+        collected: testDeck.map((c) => c.id),
         random: Random(1),
       );
       final draw = collection.drawReward();
@@ -252,10 +219,11 @@ void main() {
 
     testWidgets('deste bitince çıkışta uyarı gösterilmez', (tester) async {
       final collection = CardCollection(
-        collected: cardDeck.map((c) => c.id),
+        deck: testDeck,
+        collected: testDeck.map((c) => c.id),
         random: Random(1),
       );
-      await pumpReward(tester, collection, card: cardDeck.first, isNew: false);
+      await pumpReward(tester, collection, card: testDeck.first, isNew: false);
 
       await tester.tap(find.byKey(const ValueKey('reward_close')));
       await tester.pumpAndSettle();
@@ -265,7 +233,7 @@ void main() {
 
     testWidgets('kaydettikten sonra çıkışta uyarı gösterilmez', (tester) async {
       final collection = testCollection();
-      await pumpReward(tester, collection, card: cardDeck.last);
+      await pumpReward(tester, collection, card: testDeck.last);
 
       await tester.tap(find.text('KARTI KAYDET'));
       await tester.pumpAndSettle();
@@ -295,7 +263,7 @@ void main() {
         find.text('${collection.collectedCount} / ${collection.total} kart'),
         findsOneWidget,
       );
-      expect(find.text(cardDeck[0].title), findsOneWidget);
+      expect(find.text(testDeck[0].title), findsOneWidget);
       expect(find.text('???'), findsWidgets); // kilitli kartlar
     });
 
@@ -306,7 +274,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(ValueKey('album_${cardDeck[3].id}')));
+      await tester.tap(find.byKey(ValueKey('album_${testDeck[3].id}')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
@@ -323,7 +291,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(ValueKey('album_${cardDeck[0].id}')));
+      await tester.tap(find.byKey(ValueKey('album_${testDeck[0].id}')));
       await tester.pumpAndSettle();
       await scrollTo(tester, find.text('HARİKA, ÖĞRENDİM!'));
 
@@ -338,7 +306,8 @@ void main() {
 
     testWidgets('kategori filtresi listeyi daraltır', (tester) async {
       final collection = CardCollection(
-        collected: cardDeck.map((c) => c.id),
+        deck: testDeck,
+        collected: testDeck.map((c) => c.id),
         random: Random(1),
       );
       await tester.pumpWidget(

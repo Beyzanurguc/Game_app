@@ -1,0 +1,58 @@
+{
+  "kedi": {
+    "title": "Kedi",
+    "sourceAsset": "seed/puzzles/kedi.jpg",
+    "accent": 4294212913,
+    "icon": "pets",
+    "order": 0
+  },
+  "keci": {
+    "title": "Keçi",
+    "sourceAsset": "seed/puzzles/keci.jpg",
+    "accent": 4285374881,
+    "icon": "pets",
+    "order": 1
+  },
+  "salyangoz": {
+    "title": "Salyangoz",
+    "sourceAsset": "seed/puzzles/salyangoz.jpg",
+    "accent": 4281493095,
+    "icon": "bug",
+    "order": 2
+  },
+  "gezegen": {
+    "title": "Gezegen",
+    "sourceAsset": "seed/puzzles/gezegen.jpg",
+    "accent": 4288377545,
+    "icon": "rocket",
+    "order": 3
+  },
+  "gokkusagi": {
+    "title": "Gökkuşağı",
+    "sourceAsset": "seed/puzzles/gokkusagi.jpg",
+    "accent": 4284658539,
+    "icon": "sun",
+    "order": 4
+  },
+  "cocuk": {
+    "title": "Çocuk",
+    "sourceAsset": "seed/puzzles/cocuk.jpg",
+    "accent": 4278233823,
+    "icon": "smile",
+    "order": 5
+  },
+  "anne_kiz": {
+    "title": "Anne ve Kızı",
+    "sourceAsset": "seed/puzzles/anne_kiz.jpg",
+    "accent": 4294077829,
+    "icon": "heart",
+    "order": 6
+  },
+  "sehir": {
+    "title": "Şehir",
+    "sourceAsset": "seed/puzzles/sehir.jpg",
+    "accent": 4278216327,
+    "icon": "city",
+    "order": 7
+  }
+}

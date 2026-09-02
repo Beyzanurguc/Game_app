@@ -1,108 +1,120 @@
+import 'dart:typed_data';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
+import 'puzzle_icons.dart';
 
-/// Yapbozda kullanılabilecek bir resim.
+/// Yapbozda kullanılan bir resim.
 ///
-/// Bilgi kartlarının [CardCategory] listesi burada kullanılmıyor: yapboz
-/// resimleri kart konularıyla örtüşmek zorunda değil (çocuk, anne-kız, şehir
-/// gibi konuların kart karşılığı yok). Onun yerine her resim kendi vurgu
-/// rengini ve simgesini taşır.
+/// Görsel, yapboz belgesinin içinde Firestore'un `Bytes` alanı olarak durur —
+/// Firebase Storage kullanılmıyor, çünkü Storage ücretli plan (Blaze)
+/// gerektiriyor. 1200x1200 JPEG'ler 50–300 KB arasında; Firestore'un 1 MiB
+/// belge sınırının epey altında kalıyorlar.
+///
+/// İleride Storage'a geçilirse yalnızca [PuzzleRepository] değişir; ekranlar
+/// baytlarla çalıştığı için onlara dokunulmaz.
 class PuzzlePicture {
   const PuzzlePicture({
     required this.id,
     required this.title,
-    required this.asset,
+    required this.imageBytes,
     required this.accent,
     required this.icon,
+    this.order = 0,
   });
 
-  /// Kalıcı kimlik — testlerde ve kayıtta bu değer kullanılır.
+  /// Belge kimliği.
   final String id;
 
   /// Resim seçme ekranında görünen ad.
   final String title;
 
-  /// `pubspec.yaml` içinde kayıtlı asset yolu.
+  /// JPEG verisi.
   ///
-  /// Bu dosyalar `tools/prepare_puzzle_images.py` tarafından üretilir:
-  /// `puzzle_sources/` altındaki orijinal ortadan kare kırpılır ve 1200×1200
-  /// olarak buraya yazılır. Elle düzenlenmemeli.
-  final String asset;
+  /// `null` ise görsel okunamadı; ekran yer tutucu gösterir. Aynı yapbozun
+  /// bütün parçaları **bu tek örneği** paylaşır: Flutter'ın görsel önbelleği
+  /// [MemoryImage]'i bayt dizisinin kimliğine göre anahtarlıyor, yani yeni bir
+  /// kopya üretmek 25 parçalık tahtada 25 kez çözme demek olurdu.
+  final Uint8List? imageBytes;
 
   /// Seçim kutusunda ve tahtadaki vurgularda kullanılan renk.
   final Color accent;
 
   /// Seçim kutusundaki küçük simge.
   final IconData icon;
+
+  /// Listeleme sırası.
+  final int order;
 }
 
-/// Yapboz resimleri.
-///
-/// Yeni resim eklemek için:
-///   1. Serbest lisanslı görseli `puzzle_sources/` altına **ASCII** bir adla
-///      koy (ör. `kelebek.jpg`). Kare olması şart değil, kırpılır.
-///   2. `python tools/prepare_puzzle_images.py` çalıştır.
-///   3. Buraya bir satır ekle.
-///
-/// Buradaki her `asset` gerçekten var olmalı; `yapboz_screen_test.dart` bunu
-/// doğrular.
-const List<PuzzlePicture> puzzlePictures = [
-  PuzzlePicture(
-    id: 'kedi',
-    title: 'Kedi',
-    asset: 'assets/images/puzzles/kedi.jpg',
-    accent: AppColors.foxOrange,
-    icon: Icons.pets_rounded,
-  ),
-  PuzzlePicture(
-    id: 'keci',
-    title: 'Keçi',
-    asset: 'assets/images/puzzles/keci.jpg',
-    accent: AppColors.bandanaTeal,
-    icon: Icons.pets_rounded,
-  ),
-  PuzzlePicture(
-    id: 'salyangoz',
-    title: 'Salyangoz',
-    asset: 'assets/images/puzzles/salyangoz.jpg',
-    accent: AppColors.secondary,
-    icon: Icons.bug_report_rounded,
-  ),
-  PuzzlePicture(
-    id: 'gezegen',
-    title: 'Gezegen',
-    asset: 'assets/images/puzzles/gezegen.jpg',
-    accent: AppColors.plum,
-    icon: Icons.rocket_launch_rounded,
-  ),
-  PuzzlePicture(
-    id: 'gokkusagi',
-    title: 'Gökkuşağı',
-    asset: 'assets/images/puzzles/gokkusagi.jpg',
-    accent: AppColors.leafGreen,
-    icon: Icons.wb_sunny_rounded,
-  ),
+/// Yapboz resimlerinin kaynağı.
+abstract interface class PuzzleRepository {
+  /// Yapbozları sıralı olarak getirir; hata durumunda boş liste döner.
+  Future<List<PuzzlePicture>> fetchPuzzles();
+}
 
-  PuzzlePicture(
-    id: 'cocuk',
-    title: 'Çocuk',
-    asset: 'assets/images/puzzles/cocuk.jpg',
-    accent: AppColors.tertiaryContainer,
-    icon: Icons.emoji_emotions_rounded,
-  ),
-  PuzzlePicture(
-    id: 'anne_kiz',
-    title: 'Anne ve Kızı',
-    asset: 'assets/images/puzzles/anne_kiz.jpg',
-    accent: AppColors.berryPink,
-    icon: Icons.favorite_rounded,
-  ),
-  PuzzlePicture(
-    id: 'sehir',
-    title: 'Şehir',
-    asset: 'assets/images/puzzles/sehir.jpg',
-    accent: AppColors.tertiary,
-    icon: Icons.location_city_rounded,
-  ),
-];
+/// Firestore `puzzles` koleksiyonu.
+class FirestorePuzzleRepository implements PuzzleRepository {
+  FirestorePuzzleRepository({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  /// Koleksiyon adı — yükleme betiği de bunu yazar.
+  static const collectionName = 'puzzles';
+
+  /// Görselin belgedeki alan adı.
+  static const imageField = 'image';
+
+  @override
+  Future<List<PuzzlePicture>> fetchPuzzles() async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot;
+    try {
+      snapshot = await _firestore.collection(collectionName).get();
+    } catch (error) {
+      debugPrint('Yapbozlar okunamadı: $error');
+      return const [];
+    }
+
+    final pictures = <PuzzlePicture>[];
+    for (final doc in snapshot.docs) {
+      final picture = _toPicture(doc.id, doc.data());
+      // Görseli olmayan yapbozu listeye almıyoruz: seçilebilir ama açılmayan
+      // bir yapboz, listede hiç olmamasından daha kötü.
+      if (picture != null) pictures.add(picture);
+    }
+
+    pictures.sort((a, b) {
+      final byOrder = a.order.compareTo(b.order);
+      return byOrder != 0 ? byOrder : a.title.compareTo(b.title);
+    });
+    return pictures;
+  }
+
+  PuzzlePicture? _toPicture(String id, Map<String, dynamic> data) {
+    final title = data['title'];
+    if (title is! String || title.isEmpty) {
+      debugPrint('$id: başlık yok, yapboz atlandı.');
+      return null;
+    }
+
+    final image = data[imageField];
+    if (image is! Blob || image.bytes.isEmpty) {
+      debugPrint('$id: görsel alanı yok ya da boş, yapboz atlandı.');
+      return null;
+    }
+
+    return PuzzlePicture(
+      id: id,
+      title: title,
+      imageBytes: image.bytes,
+      accent: data['accent'] is int
+          ? Color(data['accent'] as int)
+          : AppColors.foxOrange,
+      icon: puzzleIconFor(data['icon']),
+      order: data['order'] is int ? data['order'] as int : 0,
+    );
+  }
+}

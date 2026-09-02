@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/widgets.dart';
 
-import 'card_deck.dart';
 import 'card_storage.dart';
 import 'info_card.dart';
 
@@ -18,20 +17,19 @@ typedef RewardDraw = ({InfoCard card, bool isNew});
 /// bellekte tutulur (testler ve önizleme için).
 class CardCollection extends ChangeNotifier {
   CardCollection({
-    List<InfoCard>? deck,
+    required this.deck,
     Iterable<String> collected = const [],
     this.stars = 0,
     Random? random,
     CardStorage? storage,
-  }) : deck = deck ?? cardDeck,
-       _collected = {...collected},
+  }) : _collected = {...collected},
        _random = random ?? Random(),
        _storage = storage;
 
   /// Kayıtlı durumu okuyup koleksiyonu oluşturur.
   static Future<CardCollection> restore({
     required CardStorage storage,
-    List<InfoCard>? deck,
+    required List<InfoCard> deck,
     Random? random,
   }) async {
     final state = await storage.load();

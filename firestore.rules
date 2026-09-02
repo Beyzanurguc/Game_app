@@ -1,0 +1,36 @@
+rules_version = '2';
+
+// Foxy oyun uygulaması güvenlik kuralları.
+//
+// İçerik (kartlar, yapbozlar) herkese açık DEĞİL: yalnızca oturum açmış
+// kullanıcılar okuyabilir. Uygulama anonim giriş yaptığı için bu çocuğun
+// önüne bir engel çıkarmaz ama veriyi internete açık bırakmaz.
+//
+// İçeriği istemci hiçbir koşulda yazamaz; kart ve yapboz eklemek konsoldan
+// ya da servis hesabıyla (tools/seed_firestore.js) yapılır.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- İçerik: oku, yazma ---
+    match /cards/{cardId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /puzzles/{puzzleId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // --- Oyuncu ilerlemesi: yalnızca kendi belgesi ---
+    match /users/{userId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // Tanımlanmamış her yol kapalı.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

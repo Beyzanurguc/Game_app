@@ -1,7 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_app/cards/card_collection.dart';
-import 'package:game_app/cards/card_deck.dart';
 import 'package:game_app/cards/card_storage.dart';
+
+import 'fixtures/test_cards.dart';
 
 /// Bu dosyada `SharedPreferences.setMockInitialValues` bilinçli olarak
 /// çağrılmaz: eklenti kayıtlı değilken (MissingPluginException) uygulamanın
@@ -20,14 +21,15 @@ void main() {
 
   test('eklenti yoksa oyun bellekte çalışmaya devam eder', () async {
     final collection = await CardCollection.restore(
+      deck: testDeck,
       storage: SharedPreferencesCardStorage(),
     );
 
-    collection.save(cardDeck.first);
+    collection.save(testDeck.first);
     collection.addStars(4);
     await collection.pending;
 
-    expect(collection.isCollected(cardDeck.first.id), isTrue);
+    expect(collection.isCollected(testDeck.first.id), isTrue);
     expect(collection.stars, 4);
   });
 }

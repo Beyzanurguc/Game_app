@@ -15,10 +15,14 @@ typedef YapbozSetup = ({PuzzlePicture picture, YapbozDifficulty difficulty});
 class YapbozSetupView extends StatefulWidget {
   const YapbozSetupView({
     super.key,
+    required this.pictures,
     required this.onStart,
     required this.onBack,
     this.initial,
   });
+
+  /// Seçilebilecek resimler; Firestore'dan gelir ve boş olabilir.
+  final List<PuzzlePicture> pictures;
 
   /// Seçim tamamlandığında çağrılır.
   final void Function(YapbozSetup setup) onStart;
@@ -35,7 +39,7 @@ class YapbozSetupView extends StatefulWidget {
 
 class _YapbozSetupViewState extends State<YapbozSetupView> {
   late PuzzlePicture _picture =
-      widget.initial?.picture ?? puzzlePictures.first;
+      widget.initial?.picture ?? widget.pictures.first;
   late YapbozDifficulty _difficulty =
       widget.initial?.difficulty ?? YapbozDifficulty.kolay;
 
@@ -126,9 +130,9 @@ class _YapbozSetupViewState extends State<YapbozSetupView> {
                       crossAxisSpacing: 12,
                       childAspectRatio: 0.86,
                     ),
-                itemCount: puzzlePictures.length,
+                itemCount: widget.pictures.length,
                 itemBuilder: (context, index) {
-                  final picture = puzzlePictures[index];
+                  final picture = widget.pictures[index];
                   return _PictureTile(
                     picture: picture,
                     selected: picture.id == _picture.id,
@@ -258,8 +262,12 @@ class _PictureTile extends StatelessWidget {
   }
 }
 
-/// Yapboz resmi. Dosya bulunamazsa oyun çökmez; kategori rengiyle bir yer
-/// tutucu çizilir.
+/// Yapboz resmi.
+///
+/// Görsel Firestore belgesinden bayt olarak geliyor. Aynı yapbozun bütün
+/// parçaları [PuzzlePicture.imageBytes] örneğini paylaştığı için Flutter'ın
+/// görsel önbelleği JPEG'i bir kez çözer; 25 parçalık tahtada bile tek çözme
+/// yapılır. Görsel yoksa oyun çökmez, yer tutucu çizilir.
 class PuzzleImage extends StatelessWidget {
   const PuzzleImage({super.key, required this.picture, this.fit = BoxFit.cover});
 
@@ -268,21 +276,24 @@ class PuzzleImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      picture.asset,
+    final bytes = picture.imageBytes;
+    if (bytes == null || bytes.isEmpty) return _placeholder();
+
+    return Image.memory(
+      bytes,
       fit: fit,
-      errorBuilder: (context, error, stack) => ColoredBox(
-        color: picture.accent.withValues(alpha: 0.25),
-        child: Center(
-          child: Icon(
-            picture.icon,
-            color: picture.accent,
-            size: 32,
-          ),
-        ),
-      ),
+      // Parça parça çizildiği için her karede yeniden canlandırma olmasın.
+      gaplessPlayback: true,
+      errorBuilder: (context, error, stack) => _placeholder(),
     );
   }
+
+  Widget _placeholder() => ColoredBox(
+    color: picture.accent.withValues(alpha: 0.25),
+    child: Center(
+      child: Icon(picture.icon, color: picture.accent, size: 32),
+    ),
+  );
 }
 
 // =============================================================================

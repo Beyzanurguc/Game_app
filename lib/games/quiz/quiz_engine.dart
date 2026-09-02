@@ -1,8 +1,6 @@
 import 'dart:math';
 
-import '../../cards/card_deck.dart';
 import '../../cards/info_card.dart';
-import 'quiz_bank.dart';
 
 /// Bir quiz sorusunun çoktan seçmeli gösterimi.
 class QuizQuestion {
@@ -40,8 +38,9 @@ class QuizQuestion {
 
 /// Tek bir quiz turunu yöneten motor.
 ///
-/// Sorular [quizBank] içindeki elle yazılmış içerikten üretilir: her sorunun
-/// tek bir doğru cevabı ve o soruya özel üç çeldiricisi vardır.
+/// Sorular kartın kendi [InfoCard.quiz] alanından üretilir: her sorunun tek
+/// bir doğru cevabı ve o soruya özel üç çeldiricisi vardır. Soru karta gömülü
+/// olduğu için Firestore'a eklenen bir kart quizde de kendiliğinden çıkar.
 ///
 /// Soru seçimi **pekiştirmeye** göre yapılır: önce oyuncunun albümünde olan
 /// ([collectedIds]) kartlar sorulur. Yeterli sayıda toplanmış kart yoksa kalan
@@ -49,13 +48,12 @@ class QuizQuestion {
 /// oynanabilsin — bu sorular [QuizQuestion.isReview] `false` ile işaretlenir.
 class QuizEngine {
   QuizEngine({
-    List<InfoCard>? deck,
+    required List<InfoCard> deck,
     Set<String> collectedIds = const {},
     int questionCount = 10,
     Random? random,
   }) : _random = random ?? Random() {
-    final source = deck ?? cardDeck;
-    _questions = _generateQuestions(source, collectedIds, questionCount);
+    _questions = _generateQuestions(deck, collectedIds, questionCount);
   }
 
   final Random _random;
@@ -133,8 +131,12 @@ class QuizEngine {
     Set<String> collectedIds,
     int count,
   ) {
-    // Yalnızca soru bankasında karşılığı olan kartlar sorulabilir.
-    final askable = source.where((c) => quizBank.containsKey(c.id)).toList();
+    // Yalnızca kullanılabilir sorusu olan kartlar sorulabilir. Konsolda
+    // sorusu boş bırakılmış ya da şıkları eksik bir kart quizi bozmasın diye
+    // burada eleniyor; albümde yine görünür.
+    final askable = source
+        .where((c) => c.quiz?.isUsable ?? false)
+        .toList();
 
     final collected = askable.where((c) => collectedIds.contains(c.id)).toList()
       ..shuffle(_random);
@@ -151,7 +153,7 @@ class QuizEngine {
   }
 
   QuizQuestion _buildQuestion(InfoCard card, {required bool isReview}) {
-    final item = quizBank[card.id]!;
+    final item = card.quiz!;
 
     final options = [item.correctAnswer, ...item.distractors]
       ..shuffle(_random);

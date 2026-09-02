@@ -12,6 +12,7 @@ import '../../widgets/squishy.dart';
 import '../game_dialogs.dart';
 import '../game_summary.dart';
 import 'puzzle_catalog.dart';
+import 'puzzle_library.dart';
 import 'yapboz_board.dart';
 import 'yapboz_engine.dart';
 import 'yapboz_setup.dart';
@@ -277,11 +278,7 @@ class _YapbozScreenState extends State<YapbozScreen> {
         body: SafeArea(
           bottom: false,
           child: engine == null || setup == null
-              ? YapbozSetupView(
-                  initial: _setup,
-                  onStart: _start,
-                  onBack: () => Navigator.of(context).pop(),
-                )
+              ? _buildSetup(context)
               : Stack(
                   key: _stackKey,
                   children: [
@@ -291,6 +288,22 @@ class _YapbozScreenState extends State<YapbozScreen> {
                 ),
         ),
       ),
+    );
+  }
+
+  /// Kurulum adımı. Yapboz listesi Firestore'dan gelir; boşsa oyun yerine
+  /// ne olduğunu anlatan bir mesaj gösterilir.
+  Widget _buildSetup(BuildContext context) {
+    final pictures = PuzzleLibraryScope.of(context);
+    if (pictures.isEmpty) {
+      return _PuzzlesUnavailable(onBack: () => Navigator.of(context).pop());
+    }
+
+    return YapbozSetupView(
+      pictures: pictures,
+      initial: _setup,
+      onStart: _start,
+      onBack: () => Navigator.of(context).pop(),
     );
   }
 
@@ -876,6 +889,58 @@ class _ToolButton extends StatelessWidget {
               style: AppText.labelLg.copyWith(
                 color: enabled ? AppColors.primary : AppColors.onSurfaceVariant,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Yapboz yoksa
+// =============================================================================
+
+class _PuzzlesUnavailable extends StatelessWidget {
+  const _PuzzlesUnavailable({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.gutter),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Mascot(size: 120, mood: MascotMood.sad),
+          const SizedBox(height: AppSpacing.base * 2),
+          Text(
+            'Yapbozlar yüklenemedi',
+            textAlign: TextAlign.center,
+            style: AppText.headlineMd.copyWith(color: AppColors.primary),
+          ),
+          const SizedBox(height: AppSpacing.base),
+          Text(
+            'Resimler internetten geliyor. Bağlantını kontrol edip '
+            'uygulamayı yeniden açar mısın?',
+            textAlign: TextAlign.center,
+            style: AppText.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
+          ),
+          const SizedBox(height: AppSpacing.base * 3),
+          Squishy(
+            key: const ValueKey('yapboz_unavailable_back'),
+            onTap: onBack,
+            color: AppColors.foxOrange,
+            depthColor: AppColors.primary,
+            radius: AppRadius.md,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 32,
+              vertical: 14,
+            ),
+            child: Text(
+              'GERİ DÖN',
+              style: AppText.labelLg.copyWith(color: Colors.white),
             ),
           ),
         ],

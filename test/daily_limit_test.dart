@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:game_app/cards/card_deck.dart';
 import 'package:game_app/cards/reward_card_screen.dart';
 import 'package:game_app/games/game_summary.dart';
 import 'package:game_app/main.dart';
 import 'package:game_app/settings/app_settings.dart';
 
+import 'fixtures/test_cards.dart';
 import 'helpers.dart';
 
 const _summary = GameSummary(
@@ -95,7 +95,7 @@ void main() {
 
       await tester.pumpWidget(
         wrapApp(
-          RewardCardScreen(card: cardDeck.last, summary: _summary),
+          RewardCardScreen(card: testDeck.last, summary: _summary),
           settings: testSettings(dailyGameLimit: 1, playsToday: 1),
         ),
       );
@@ -114,7 +114,7 @@ void main() {
 
       await tester.pumpWidget(
         wrapApp(
-          RewardCardScreen(card: cardDeck.last, summary: _summary),
+          RewardCardScreen(card: testDeck.last, summary: _summary),
           settings: testSettings(dailyGameLimit: 5, playsToday: 1),
         ),
       );

@@ -1,0 +1,11 @@
+{
+  "name": "foxy-tools",
+  "private": true,
+  "description": "Firebase tohum yükleme betikleri",
+  "scripts": {
+    "seed:dry": "node seed_firestore.js --dry-run"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}

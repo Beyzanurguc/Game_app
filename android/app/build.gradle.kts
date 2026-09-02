@@ -27,7 +27,9 @@ android {
         applicationId = "com.example.game_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // firebase_auth ve cloud_firestore en az API 23 istiyor; Flutter'ın
+        // varsayılanı bunun altında kalabiliyor.
+        minSdk = maxOf(flutter.minSdkVersion, 23)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_app/badges/badge_catalog.dart';
-import 'package:game_app/cards/card_deck.dart';
 import 'package:game_app/games/game_summary.dart';
 import 'package:game_app/profile/fox_items.dart';
 import 'package:game_app/profile/player_profile.dart';
 
+import 'fixtures/test_cards.dart';
 import 'helpers.dart';
 
 BadgeStatus statusOf(BadgeContext context, String id) =>
@@ -102,9 +102,9 @@ void main() {
   });
 
   test('kart rozetlerinin hedefi deste uzunluğudur', () {
-    final context = contextWith(collected: cardDeck.length);
+    final context = contextWith(collected: testDeck.length);
 
-    expect(statusOf(context, 'all_cards').target, cardDeck.length);
+    expect(statusOf(context, 'all_cards').target, testDeck.length);
     expect(statusOf(context, 'all_cards').earned, isTrue);
     expect(statusOf(context, 'first_card').earned, isTrue);
   });

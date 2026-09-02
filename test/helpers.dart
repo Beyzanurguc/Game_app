@@ -2,20 +2,28 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:game_app/cards/card_collection.dart';
-import 'package:game_app/cards/card_deck.dart';
+import 'package:game_app/cards/info_card.dart';
 import 'package:game_app/profile/player_profile.dart';
 import 'package:game_app/settings/app_settings.dart';
 import 'package:game_app/settings/settings_storage.dart';
+import 'package:game_app/games/yapboz/puzzle_catalog.dart';
+import 'package:game_app/games/yapboz/puzzle_library.dart';
 import 'package:game_app/theme/app_theme.dart';
+
+import 'fixtures/test_cards.dart';
+import 'fixtures/test_puzzles.dart';
 
 /// Testlerde kullanılan koleksiyon: ilk [collected] kart açık, sabit tohum.
 CardCollection testCollection({
   int collected = 2,
   int stars = 10,
   int seed = 1,
+  List<InfoCard>? deck,
 }) {
+  final source = deck ?? testDeck;
   return CardCollection(
-    collected: cardDeck.take(collected).map((card) => card.id),
+    deck: source,
+    collected: source.take(collected).map((card) => card.id),
     stars: stars,
     random: Random(seed),
   );
@@ -53,6 +61,7 @@ Widget wrapApp(
   CardCollection? collection,
   PlayerProfile? profile,
   AppSettings? settings,
+  List<PuzzlePicture>? puzzles,
 }) {
   return CardCollectionScope(
     collection: collection ?? testCollection(),
@@ -60,7 +69,10 @@ Widget wrapApp(
       profile: profile ?? PlayerProfile(),
       child: AppSettingsScope(
         settings: settings ?? testSettings(),
-        child: MaterialApp(theme: buildAppTheme(), home: child),
+        child: PuzzleLibraryScope(
+          pictures: puzzles ?? testPuzzles,
+          child: MaterialApp(theme: buildAppTheme(), home: child),
+        ),
       ),
     ),
   );
