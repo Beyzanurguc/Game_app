@@ -15,6 +15,7 @@ import 'home_screen.dart';
 import 'profile/player_profile.dart';
 import 'profile/profile_storage.dart';
 import 'settings/app_settings.dart';
+import 'settings/haptics.dart';
 import 'settings/settings_storage.dart';
 import 'settings/welcome_screen.dart';
 import 'theme/app_theme.dart';
@@ -23,6 +24,7 @@ import 'widgets/squishy.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _lockPortraitOnPhones();
+  await Haptics.detect();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(const BootstrapApp());
@@ -203,7 +205,7 @@ class _BootstrapShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Tilki Oyun',
+      title: 'Foxium',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       home: Scaffold(
@@ -317,7 +319,7 @@ class GameApp extends StatelessWidget {
           child: PuzzleLibraryScope(
             pictures: puzzles,
             child: MaterialApp(
-              title: 'Tilki Oyun',
+              title: 'Foxium',
               debugShowCheckedModeBanner: false,
               theme: buildAppTheme(),
               home: const _RootScreen(),

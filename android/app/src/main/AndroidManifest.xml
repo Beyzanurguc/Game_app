@@ -3,8 +3,13 @@
          manifestinde tanimliysa release derlemesi aga hic cikamaz. -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- Oyunlardaki titresim geri bildirimi. vibration paketi bunu kendi
+         manifestinde de tanimliyor; burada acikca yaziyoruz ki izin listesi
+         tek bakista gorunsun. -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
+
     <application
-        android:label="Foxy"
+        android:label="Foxium"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

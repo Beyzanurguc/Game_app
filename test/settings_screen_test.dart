@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_app/firebase/session_scope.dart';
 import 'package:game_app/settings/app_settings.dart';
@@ -237,6 +238,37 @@ void main() {
       await pumpSettings(tester, settings: testSettings(hapticsEnabled: false));
 
       expect(tester.widget<Switch>(_haptics).value, isFalse);
+    });
+
+    testWidgets('açılınca örnek titreşim gönderir', (tester) async {
+      final calls = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'HapticFeedback.vibrate') {
+            calls.add('${call.arguments}');
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+
+      await pumpSettings(tester, settings: testSettings(hapticsEnabled: false));
+
+      // Kapalıdan açığa: örnek titreşim gitmeli.
+      await tester.tap(_haptics);
+      await tester.pumpAndSettle();
+      expect(calls, ['HapticFeedbackType.mediumImpact']);
+
+      // Açıktan kapalıya: hiçbir şey gitmemeli.
+      await tester.tap(_haptics);
+      await tester.pumpAndSettle();
+      expect(calls, hasLength(1));
     });
 
     testWidgets('kaydet beklenmeden anında uygulanır', (tester) async {

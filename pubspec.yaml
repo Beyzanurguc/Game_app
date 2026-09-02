@@ -1,5 +1,5 @@
 name: game_app
-description: "Foxy - cocuklar icin bulmaca oyunlari ve bilgi karti albumu."
+description: "Foxium - cocuklar icin bulmaca oyunlari ve bilgi karti albumu."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -38,9 +38,11 @@ dependencies:
   firebase_core: ^4.14.0
   cloud_firestore: ^6.9.0
   firebase_auth: ^6.6.1
+  vibration: ^3.2.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -49,6 +51,25 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   fake_cloud_firestore: ^4.2.0
+
+# Uygulama ikonu: `dart run flutter_launcher_icons` ile üretilir.
+#
+# İki ayrı kaynak var, çünkü ölçüleri farklı olmak zorunda:
+# - foxium_foreground: adaptive ikonun ön planı. Tuval 108dp ama launcher
+#   maskesi yalnızca ortadaki 72dp'yi gösterir; tilki bu yüzden tuvalin
+#   %66'sına oturtuldu. Daha büyük olsa kenarları kırpılır, daha küçük olsa
+#   ekranda minik görünür.
+# - foxium_icon: iOS ve eski Android için. Saydamlık yok (iOS kabul etmiyor),
+#   arka plan krem; köşe yuvarlamasını sistem kendisi yapar.
+#
+# İkisi de tools/build_icon_sources.py ile "Foxy logo.png"den üretiliyor.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/icon/foxium_icon.png"
+  adaptive_icon_foreground: "assets/icon/foxium_foreground.png"
+  adaptive_icon_background: "#FFF5EB"
 
 flutter:
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../firebase/session_scope.dart';
+import 'haptics.dart';
 import '../profile/fox_avatar.dart';
 import '../profile/player_profile.dart';
 import '../theme/app_theme.dart';
@@ -73,6 +74,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
   }
 
+  /// Titreşimi açar/kapatır ve açarken örnek bir titreşim gönderir.
+  ///
+  /// Örnek titreşim tanı da koyduruyor: cihazın sistem ayarlarında dokunsal
+  /// geri bildirim kapalıysa burada da hiçbir şey hissedilmez ve sorunun
+  /// oyunda olmadığı anlaşılır.
+  void _setHaptics(bool enabled) {
+    AppSettingsScope.of(context).updateHaptics(enabled);
+    if (enabled) buzz(context, Buzz.medium);
+  }
+
   /// Çıkışı onaylatır ve onaylanırsa oturumu kapatır.
   ///
   /// Anonim hesapta çıkış geri alınamadığı için önce ne kaybedileceğini
@@ -128,7 +139,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: AppSpacing.base * 2),
                       _HapticsCard(
                         enabled: settings.hapticsEnabled,
-                        onChanged: settings.updateHaptics,
+                        onChanged: _setHaptics,
                       ),
                       if (canSignOut) ...[
                         const SizedBox(height: AppSpacing.base * 2),

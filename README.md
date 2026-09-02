@@ -1,4 +1,4 @@
-# Foxy
+# Foxium
 
 Çocuklar için bulmaca oyunları ve bilgi kartı albümü. Flutter ile yazıldı;
 ilerleme Firebase (anonim giriş + Firestore) üzerinde tutulur.
@@ -28,11 +28,22 @@ flutter test
 flutter analyze
 ```
 
-Uygulama ikonunu yeniden üretmek için:
+Uygulama ikonunu yeniden üretmek için (önce kaynak görseller, sonra
+platform dosyaları):
+
+```bash
+python tools/build_icon_sources.py
+```
 
 ```bash
 dart run flutter_launcher_icons
 ```
+
+Android'de ikonu elle düzenlemek gerekirse Android Studio'nun Image Asset
+sihirbazını kullanma: ürettiği `.webp` dosyaları `flutter_launcher_icons`'ın
+`.png` çıktılarıyla aynı adı taşıdığı için derlemede "duplicate resource"
+hatası verir, üstelik varsayılan ölçeğiyle ikon küçük görünür. Ölçüyü
+değiştirmek istersen `tools/build_icon_sources.py` içindeki oranları düzenle.
 
 ## Firebase
 

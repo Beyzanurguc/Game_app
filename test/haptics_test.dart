@@ -7,7 +7,30 @@ import 'package:game_app/settings/settings_storage.dart';
 
 import 'helpers.dart';
 
-/// Titreşim çağrılarını yakalar; platform kanalı testte gerçek cihaza gitmez.
+/// Titreşim motoruna giden çağrıları yakalar (`vibration` paketinin kanalı).
+List<Map<String, Object?>> _recordVibrations(WidgetTester tester) {
+  final calls = <Map<String, Object?>>[];
+
+  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+    const MethodChannel('vibration'),
+    (call) async {
+      if (call.method == 'vibrate') {
+        calls.add(Map<String, Object?>.from(call.arguments as Map));
+      }
+      return null;
+    },
+  );
+  addTearDown(
+    () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('vibration'),
+      null,
+    ),
+  );
+
+  return calls;
+}
+
+/// Flutter'ın kendi titreşim çağrılarını yakalar.
 List<String> _recordHaptics(WidgetTester tester) {
   final calls = <String>[];
 
@@ -36,15 +59,15 @@ Future<BuildContext> _pumpScope(
   AppSettings settings,
 ) async {
   await tester.pumpWidget(
-    wrapApp(
-      const SizedBox.shrink(key: ValueKey('scope')),
-      settings: settings,
-    ),
+    wrapApp(const SizedBox.shrink(key: ValueKey('scope')), settings: settings),
   );
   return tester.element(find.byKey(const ValueKey('scope')));
 }
 
 void main() {
+  // Yetenek statik tutuluyor; testler birbirine sızmasın.
+  tearDown(() => Haptics.debugSetSupport(useVibrator: false));
+
   group('AppSettings titreşim', () {
     test('varsayılan olarak açık', () {
       expect(AppSettings().hapticsEnabled, isTrue);
@@ -80,7 +103,73 @@ void main() {
     });
   });
 
-  group('buzz', () {
+  group('buzz — titreşim motoru varken', () {
+    testWidgets('süre ve güçle doğrudan motora gider', (tester) async {
+      Haptics.debugSetSupport(useVibrator: true, hasAmplitude: true);
+      final calls = _recordVibrations(tester);
+      final context = await _pumpScope(
+        tester,
+        testSettings(hapticsEnabled: true),
+      );
+
+      buzz(context, Buzz.heavy);
+      await tester.pump();
+
+      expect(calls, hasLength(1));
+      expect(calls.single['duration'], 50);
+      expect(calls.single['amplitude'], 255);
+    });
+
+    testWidgets('güç ayarı yoksa amplitude gönderilmez', (tester) async {
+      Haptics.debugSetSupport(useVibrator: true);
+      final calls = _recordVibrations(tester);
+      final context = await _pumpScope(
+        tester,
+        testSettings(hapticsEnabled: true),
+      );
+
+      buzz(context, Buzz.selection);
+      await tester.pump();
+
+      expect(calls.single['duration'], 12);
+      expect(calls.single['amplitude'], -1, reason: 'cihazın varsayılanı');
+    });
+
+    testWidgets('türler birbirinden farklı şiddette', (tester) async {
+      Haptics.debugSetSupport(useVibrator: true, hasAmplitude: true);
+      final calls = _recordVibrations(tester);
+      final context = await _pumpScope(
+        tester,
+        testSettings(hapticsEnabled: true),
+      );
+
+      for (final kind in Buzz.values) {
+        buzz(context, kind);
+      }
+      await tester.pump();
+
+      final durations = calls.map((c) => c['duration']! as int).toList();
+      expect(durations, hasLength(Buzz.values.length));
+      // selection en hafif, heavy en güçlü olmalı.
+      expect(durations, orderedEquals(List.of(durations)..sort()));
+    });
+
+    testWidgets('ayar kapalıyken motora hiç gitmez', (tester) async {
+      Haptics.debugSetSupport(useVibrator: true, hasAmplitude: true);
+      final calls = _recordVibrations(tester);
+      final context = await _pumpScope(
+        tester,
+        testSettings(hapticsEnabled: false),
+      );
+
+      buzz(context, Buzz.heavy);
+      await tester.pump();
+
+      expect(calls, isEmpty);
+    });
+  });
+
+  group('buzz — motor yokken (iOS ve emülatör)', () {
     testWidgets('ayar açıkken titreşir', (tester) async {
       final calls = _recordHaptics(tester);
       final context = await _pumpScope(
