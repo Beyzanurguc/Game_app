@@ -75,6 +75,7 @@ class Squishy extends StatefulWidget {
     this.depth = 6,
     this.onTap,
     this.padding = EdgeInsets.zero,
+    this.semanticLabel,
   });
 
   final Widget child;
@@ -85,6 +86,12 @@ class Squishy extends StatefulWidget {
   final double depth;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry padding;
+
+  /// Ekran okuyucunun söyleyeceği ad.
+  ///
+  /// Verilmezse içindeki yazı okunur; yalnızca simge taşıyan düğmelerde
+  /// gerekli, çünkü orada okunacak bir yazı yok.
+  final String? semanticLabel;
 
   @override
   State<Squishy> createState() => _SquishyState();
@@ -102,25 +109,65 @@ class _SquishyState extends State<Squishy> {
   Widget build(BuildContext context) {
     final enabled = widget.onTap != null;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: enabled ? (_) => _setPressed(true) : null,
-      onTapUp: enabled ? (_) => _setPressed(false) : null,
-      onTapCancel: enabled ? () => _setPressed(false) : null,
-      onTap: widget.onTap,
-      child: AnimatedPadding(
-        duration: const Duration(milliseconds: 90),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.only(top: _pressed ? widget.depth : 0),
-        child: DepthBox(
-          color: widget.color,
-          depthColor: widget.depthColor,
-          borderColor: widget.borderColor,
-          radius: widget.radius,
-          depth: widget.depth,
-          depthVisible: !_pressed,
-          padding: widget.padding,
-          child: widget.child,
+    // Düğme olduğu ekran okuyucuya söylenir; kapalıysa öyle duyurulur.
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: widget.semanticLabel,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: enabled ? (_) => _setPressed(true) : null,
+        onTapUp: enabled ? (_) => _setPressed(false) : null,
+        onTapCancel: enabled ? () => _setPressed(false) : null,
+        onTap: widget.onTap,
+        child: AnimatedPadding(
+          duration: const Duration(milliseconds: 90),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(top: _pressed ? widget.depth : 0),
+          child: DepthBox(
+            color: widget.color,
+            depthColor: widget.depthColor,
+            borderColor: widget.borderColor,
+            radius: widget.radius,
+            depth: widget.depth,
+            depthVisible: !_pressed,
+            padding: widget.padding,
+            child: widget.child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Ekranların sol üstündeki geri düğmesi.
+///
+/// Yalnızca simge taşıdığı için adı ekran okuyucuya ayrıca söylenir; içinde
+/// okunacak bir yazı yok. Dokunma alanı [AppSpacing.touchTarget] kadar.
+class BackTapTarget extends StatelessWidget {
+  const BackTapTarget({
+    super.key,
+    required this.onTap,
+    this.color = AppColors.primary,
+  });
+
+  final VoidCallback onTap;
+
+  /// Simge rengi; koyu başlıklarda [AppColors.onSurfaceVariant] kullanılıyor.
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Geri',
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: AppSpacing.touchTarget,
+          width: AppSpacing.touchTarget,
+          alignment: Alignment.center,
+          child: Icon(Icons.arrow_back_rounded, color: color),
         ),
       ),
     );

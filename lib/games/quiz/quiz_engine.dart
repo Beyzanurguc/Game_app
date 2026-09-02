@@ -134,9 +134,7 @@ class QuizEngine {
     // Yalnızca kullanılabilir sorusu olan kartlar sorulabilir. Konsolda
     // sorusu boş bırakılmış ya da şıkları eksik bir kart quizi bozmasın diye
     // burada eleniyor; albümde yine görünür.
-    final askable = source
-        .where((c) => c.quiz?.isUsable ?? false)
-        .toList();
+    final askable = source.where((c) => c.quiz?.isUsable ?? false).toList();
 
     final collected = askable.where((c) => collectedIds.contains(c.id)).toList()
       ..shuffle(_random);
@@ -155,8 +153,7 @@ class QuizEngine {
   QuizQuestion _buildQuestion(InfoCard card, {required bool isReview}) {
     final item = card.quiz!;
 
-    final options = [item.correctAnswer, ...item.distractors]
-      ..shuffle(_random);
+    final options = [item.correctAnswer, ...item.distractors]..shuffle(_random);
 
     return QuizQuestion(
       card: card,

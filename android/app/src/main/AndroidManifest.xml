@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Firebase (giris, Firestore) icin gerekli. Yalnizca debug
+         manifestinde tanimliysa release derlemesi aga hic cikamaz. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
-        android:label="game_app"
+        android:label="Foxy"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

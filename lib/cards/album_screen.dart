@@ -128,18 +128,7 @@ class _AlbumHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 4, AppSpacing.marginMobile, 12),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: onBack,
-            child: Container(
-              height: AppSpacing.touchTarget,
-              width: AppSpacing.touchTarget,
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
+          BackTapTarget(onTap: onBack, color: AppColors.primary),
           Expanded(
             child: Text(
               'Bilgi Albümü',

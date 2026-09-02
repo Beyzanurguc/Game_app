@@ -20,6 +20,13 @@ abstract interface class AuthService {
 
   /// Şu anki kullanıcı kimliği; oturum yoksa `null`.
   String? get currentUserId;
+
+  /// Oturumu kapatır.
+  ///
+  /// Anonim hesapta bu geri alınamaz: kapatılan `uid` bir daha alınamadığı
+  /// için `users/{uid}` altındaki ilerlemeye ulaşılamaz. Çağıran taraf
+  /// kullanıcıyı bu konuda uyarmış olmalı.
+  Future<void> signOut();
 }
 
 /// Firebase Authentication üzerinden anonim oturum.
@@ -54,6 +61,16 @@ class FirebaseAuthService implements AuthService {
       return null;
     }
   }
+
+  @override
+  Future<void> signOut() async {
+    try {
+      await _auth.signOut();
+    } catch (error) {
+      // Çıkış yerelde zaten gerçekleşmiş sayılır; akışı durdurmaya değmez.
+      debugPrint('Çıkış sırasında hata: $error');
+    }
+  }
 }
 
 /// Testler için sabit kimlik döndüren oturum.
@@ -68,4 +85,10 @@ class FakeAuthService implements AuthService {
 
   @override
   Future<String?> signIn() async => userId;
+
+  /// Kaç kez çıkış yapıldığı — testler bunu kontrol eder.
+  int signOutCount = 0;
+
+  @override
+  Future<void> signOut() async => signOutCount++;
 }

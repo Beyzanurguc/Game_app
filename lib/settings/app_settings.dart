@@ -31,6 +31,7 @@ class AppSettings extends ChangeNotifier {
   }) : _clock = clock ?? DateTime.now,
        _childName = state.childName,
        _dailyGameLimit = state.dailyGameLimit,
+       _hapticsEnabled = state.hapticsEnabled,
        _onboarded = state.onboarded,
        _playDate = state.playDate,
        _playsToday = state.playsToday;
@@ -47,6 +48,7 @@ class AppSettings extends ChangeNotifier {
 
   String _childName;
   int _dailyGameLimit;
+  bool _hapticsEnabled;
   bool _onboarded;
   String _playDate;
   int _playsToday;
@@ -60,6 +62,9 @@ class AppSettings extends ChangeNotifier {
   bool get hasName => _childName.isNotEmpty;
 
   int get dailyGameLimit => _dailyGameLimit;
+
+  /// Oyunlarda titreşim geri bildirimi verilsin mi?
+  bool get hapticsEnabled => _hapticsEnabled;
 
   /// Giriş sayfası tamamlandı mı?
   bool get onboarded => _onboarded;
@@ -103,6 +108,16 @@ class AppSettings extends ChangeNotifier {
     _save();
   }
 
+  /// Titreşimi açar ya da kapatır.
+  ///
+  /// Diğer ayarların aksine kaydet düğmesini beklemez: anahtarın etkisi
+  /// anında hissedilsin diye hemen yazılır.
+  void updateHaptics(bool enabled) {
+    if (enabled == _hapticsEnabled) return;
+    _hapticsEnabled = enabled;
+    _save();
+  }
+
   /// Yeni bir tur başladı; günlük haktan bir tane düşer.
   void recordPlay() {
     final today = _dateKey(_clock());
@@ -117,6 +132,7 @@ class AppSettings extends ChangeNotifier {
   StoredSettings snapshot() => StoredSettings(
     childName: _childName,
     dailyGameLimit: _dailyGameLimit,
+    hapticsEnabled: _hapticsEnabled,
     onboarded: _onboarded,
     playDate: _playDate,
     playsToday: _playsToday,

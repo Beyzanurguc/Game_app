@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:game_app/cards/card_collection.dart';
 import 'package:game_app/cards/info_card.dart';
 import 'package:game_app/profile/player_profile.dart';
@@ -33,6 +34,7 @@ CardCollection testCollection({
 AppSettings testSettings({
   String name = 'Beyza',
   int dailyGameLimit = maxDailyGameLimit,
+  bool hapticsEnabled = true,
   int playsToday = 0,
   SettingsStorage? storage,
   DateTime Function()? clock,
@@ -43,6 +45,7 @@ AppSettings testSettings({
     state: StoredSettings(
       childName: name,
       dailyGameLimit: dailyGameLimit,
+      hapticsEnabled: hapticsEnabled,
       onboarded: true,
       playDate:
           '${today.year.toString().padLeft(4, '0')}-'
@@ -76,4 +79,25 @@ Widget wrapApp(
       ),
     ),
   );
+}
+
+/// Ekrandaki yetişkin kapısını yanıtlayıp geçer.
+///
+/// Soru rastgele üretildiği için yanıt testte sabitlenemez; pencerede yazan
+/// çarpım okunup hesaplanır.
+Future<void> passParentGate(WidgetTester tester) async {
+  final question = tester.widget<Text>(
+    find.byKey(const ValueKey('parent_gate_question')),
+  );
+  final numbers = RegExp(r'\d+')
+      .allMatches(question.data ?? '')
+      .map((match) => int.parse(match[0]!))
+      .toList();
+
+  await tester.enterText(
+    find.byKey(const ValueKey('parent_gate_answer')),
+    '${numbers[0] * numbers[1]}',
+  );
+  await tester.tap(find.byKey(const ValueKey('parent_gate_submit')));
+  await tester.pumpAndSettle();
 }

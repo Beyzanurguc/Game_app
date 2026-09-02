@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+import '../settings/haptics.dart';
 import '../cards/card_collection.dart';
 import '../theme/app_theme.dart';
 import '../widgets/squishy.dart';
@@ -25,7 +25,7 @@ class _FoxWorkshopScreenState extends State<FoxWorkshopScreen> {
 
     // Sahip olunan aksesuar takılır ya da çıkarılır.
     if (profile.owns(item.id)) {
-      HapticFeedback.selectionClick();
+      buzz(context, Buzz.selection);
       profile.toggleEquip(item);
       return;
     }
@@ -44,12 +44,12 @@ class _FoxWorkshopScreenState extends State<FoxWorkshopScreen> {
     // Bakiye kontrolü satın alma anında yeniden yapılır.
     if (!wallet.spendStars(item.price)) return;
     profile.unlock(item);
-    HapticFeedback.mediumImpact();
+    buzz(context, Buzz.medium);
     _tell('${item.name} tilkiye çok yakıştı!');
   }
 
   void _removeSlot() {
-    HapticFeedback.selectionClick();
+    buzz(context, Buzz.selection);
     PlayerProfileScope.of(context).clearSlot(_slot);
   }
 
@@ -164,18 +164,10 @@ class _WorkshopHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 4, AppSpacing.marginMobile, 12),
       child: Row(
         children: [
-          GestureDetector(
+          BackTapTarget(
             key: const ValueKey('workshop_back'),
             onTap: onBack,
-            child: Container(
-              height: AppSpacing.touchTarget,
-              width: AppSpacing.touchTarget,
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppColors.primary,
-              ),
-            ),
+            color: AppColors.primary,
           ),
           Expanded(
             child: Text(

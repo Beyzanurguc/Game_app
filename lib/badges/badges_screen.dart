@@ -145,18 +145,10 @@ class _BadgesHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 4, AppSpacing.marginMobile, 12),
       child: Row(
         children: [
-          GestureDetector(
+          BackTapTarget(
             key: const ValueKey('badges_back'),
             onTap: onBack,
-            child: Container(
-              height: AppSpacing.touchTarget,
-              width: AppSpacing.touchTarget,
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppColors.primary,
-              ),
-            ),
+            color: AppColors.primary,
           ),
           Expanded(
             child: Text(

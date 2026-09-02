@@ -45,9 +45,7 @@ class FirestoreCardStorage implements CardStorage {
       if (field is Map) {
         final map = field.cast<String, dynamic>();
         return (
-          collected: {
-            for (final id in _list(map['collected'])) id,
-          },
+          collected: {for (final id in _list(map['collected'])) id},
           stars: map['stars'] is int ? map['stars'] as int : 0,
         );
       }
@@ -136,6 +134,5 @@ class FirestoreProfileStorage implements ProfileStorage {
   }
 }
 
-List<String> _list(Object? value) => value is List
-    ? [for (final item in value) '$item']
-    : const [];
+List<String> _list(Object? value) =>
+    value is List ? [for (final item in value) '$item'] : const [];

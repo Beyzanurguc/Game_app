@@ -1,11 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'cards/card_collection.dart';
 import 'cards/card_repository.dart';
 import 'cards/card_storage.dart';
 import 'firebase/auth_service.dart';
 import 'firebase/firestore_storage.dart';
+import 'firebase/session_scope.dart';
 import 'firebase_options.dart';
 import 'games/yapboz/puzzle_catalog.dart';
 import 'games/yapboz/puzzle_library.dart';
@@ -20,9 +22,28 @@ import 'widgets/squishy.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await _lockPortraitOnPhones();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(const BootstrapApp());
+}
+
+/// Telefonlarda ekranı dikeye sabitler.
+///
+/// Sudoku, Tetris ve Blok tahtaları dikey için tasarlandı; telefon yan
+/// çevrilince sığmıyorlar. Tablet bunun dışında: ana sayfanın geniş düzeni
+/// orada bilerek var ve tahtalara da yer kalıyor.
+Future<void> _lockPortraitOnPhones() async {
+  final view = WidgetsBinding.instance.platformDispatcher.views.firstOrNull;
+  if (view == null) return;
+
+  final size = view.physicalSize / view.devicePixelRatio;
+  if (size.shortestSide >= 600) return;
+
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 }
 
 /// Açılış akışı: oturum aç, içeriği indir, sonra oyunu göster.
@@ -51,6 +72,9 @@ class BootstrapApp extends StatefulWidget {
 enum _Phase { loading, ready, failed }
 
 class _BootstrapAppState extends State<BootstrapApp> {
+  /// Giriş ve çıkışın aynı oturumu görmesi için tek örnek tutulur.
+  late final AuthService _auth = widget.authService ?? FirebaseAuthService();
+
   _Phase _phase = _Phase.loading;
 
   CardCollection? _collection;
@@ -73,12 +97,11 @@ class _BootstrapAppState extends State<BootstrapApp> {
       _failure = '';
     });
 
-    final auth = widget.authService ?? FirebaseAuthService();
     final cardRepository = widget.cardRepository ?? FirestoreCardRepository();
     final puzzleRepository =
         widget.puzzleRepository ?? FirestorePuzzleRepository();
 
-    final userId = await auth.signIn();
+    final userId = await _auth.signIn();
     if (userId == null) {
       if (!mounted) return;
       setState(() {
@@ -140,6 +163,19 @@ class _BootstrapAppState extends State<BootstrapApp> {
     });
   }
 
+  /// Oturumu kapatır ve uygulamayı ilk açılıştaki hâline döndürür.
+  ///
+  /// Sıra önemli: önce yerel kayıt temizlenir, sonra oturum kapatılır.
+  /// Tersi olsaydı [_load] araya girip yeni `uid` altına eski ilerlemeyi
+  /// yazabilirdi. Ardından [_load] yeni bir anonim hesapla baştan çalışır;
+  /// ayarlar sıfırlandığı için uygulama giriş sayfasına açılır.
+  Future<void> _signOut() async {
+    await clearLocalState();
+    await _auth.signOut();
+    if (!mounted) return;
+    await _load();
+  }
+
   @override
   Widget build(BuildContext context) {
     return switch (_phase) {
@@ -152,6 +188,7 @@ class _BootstrapAppState extends State<BootstrapApp> {
         profile: _profile,
         settings: _settings,
         puzzles: _puzzles,
+        onSignOut: _signOut,
       ),
     };
   }
@@ -250,6 +287,7 @@ class GameApp extends StatelessWidget {
     this.profile,
     this.settings,
     this.puzzles = const [],
+    this.onSignOut,
   });
 
   final CardCollection collection;
@@ -263,9 +301,14 @@ class GameApp extends StatelessWidget {
   /// Yapboz ekranının kullanacağı resimler.
   final List<PuzzlePicture> puzzles;
 
+  /// Verilmezse ayarlar sayfasında çıkış düğmesi gösterilmez; çıkış açılış
+  /// akışını baştan çalıştırmayı gerektirdiği için yalnızca [BootstrapApp]
+  /// bunu sağlayabilir.
+  final Future<void> Function()? onSignOut;
+
   @override
   Widget build(BuildContext context) {
-    return CardCollectionScope(
+    final app = CardCollectionScope(
       collection: collection,
       child: PlayerProfileScope(
         profile: profile ?? PlayerProfile(),
@@ -283,6 +326,10 @@ class GameApp extends StatelessWidget {
         ),
       ),
     );
+
+    final signOut = onSignOut;
+    if (signOut == null) return app;
+    return SessionScope(onSignOut: signOut, child: app);
   }
 }
 

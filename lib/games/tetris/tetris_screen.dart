@@ -1,3 +1,4 @@
+import '../../settings/haptics.dart';
 import 'dart:async';
 import 'dart:math';
 
@@ -123,7 +124,7 @@ class _TetrisScreenState extends State<TetrisScreen> {
       final cleared = _game.lines - _seenLines;
       _seenLines = _game.lines;
       _celebrate(cleared == 4 ? 'TETRİS!' : '$cleared SATIR!');
-      HapticFeedback.mediumImpact();
+      buzz(context, Buzz.medium);
     }
     if (_game.level > _seenLevel) {
       _seenLevel = _game.level;
@@ -141,12 +142,12 @@ class _TetrisScreenState extends State<TetrisScreen> {
 
   void _move(bool left) {
     _play(() => left ? _game.moveLeft() : _game.moveRight());
-    HapticFeedback.selectionClick();
+    buzz(context, Buzz.selection);
   }
 
   void _rotate() {
     _play(_game.rotate);
-    HapticFeedback.selectionClick();
+    buzz(context, Buzz.selection);
   }
 
   void _softDrop() {
@@ -156,7 +157,7 @@ class _TetrisScreenState extends State<TetrisScreen> {
 
   void _hardDrop() {
     _play(_game.hardDrop);
-    HapticFeedback.mediumImpact();
+    buzz(context, Buzz.medium);
     _scheduleGravity();
   }
 
@@ -184,7 +185,7 @@ class _TetrisScreenState extends State<TetrisScreen> {
   Future<void> _handleGameOver() async {
     _gravity?.cancel();
     _clock?.cancel();
-    HapticFeedback.heavyImpact();
+    buzz(context, Buzz.heavy);
 
     final summary = GameSummary(
       kind: GameKind.tetris,
@@ -346,6 +347,7 @@ class _Header extends StatelessWidget {
           icon: Icons.arrow_back_rounded,
           onTap: onBack,
           keyValue: 'tetris_back',
+          semanticLabel: 'Geri',
         ),
         // Puan ve süre tek satırda: tahtaya daha çok dikey alan kalır.
         Expanded(
@@ -401,6 +403,7 @@ class _Header extends StatelessWidget {
           icon: Icons.pause_rounded,
           onTap: onPause,
           keyValue: 'tetris_pause',
+          semanticLabel: 'Duraklat',
         ),
       ],
     );
@@ -412,26 +415,34 @@ class _RoundButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     required this.keyValue,
+    required this.semanticLabel,
   });
 
   final IconData icon;
   final VoidCallback onTap;
   final String keyValue;
 
+  /// İçinde yazı yok; adı ekran okuyucuya buradan söylenir.
+  final String semanticLabel;
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      key: ValueKey(keyValue),
-      onTap: onTap,
-      child: Container(
-        height: AppSpacing.touchTarget,
-        width: AppSpacing.touchTarget,
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainer,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.outlineVariant, width: 2),
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      child: GestureDetector(
+        key: ValueKey(keyValue),
+        onTap: onTap,
+        child: Container(
+          height: AppSpacing.touchTarget,
+          width: AppSpacing.touchTarget,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainer,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.outlineVariant, width: 2),
+          ),
+          child: Icon(icon, color: AppColors.primary),
         ),
-        child: Icon(icon, color: AppColors.primary),
       ),
     );
   }

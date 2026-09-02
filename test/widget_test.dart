@@ -118,6 +118,9 @@ void main() {
     await tester.tap(find.text('Ayarlar'));
     await tester.pumpAndSettle();
 
+    // Ayarlar bir ebeveyn alanı; önce yetişkin kapısı geçilir.
+    await passParentGate(tester);
+
     expect(find.text('İsim'), findsOneWidget);
     expect(find.text('Günlük oyun hakkı'), findsOneWidget);
 

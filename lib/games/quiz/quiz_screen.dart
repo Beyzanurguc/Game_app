@@ -1,7 +1,7 @@
+import '../../settings/haptics.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../cards/card_collection.dart';
 import '../../cards/info_card.dart';
@@ -60,17 +60,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 350),
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(1, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
-    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOut,
-    ));
+    _slideAnimation = Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
+    _fadeAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut));
     _slideController.forward();
   }
 
@@ -134,14 +131,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
   void _selectOption(int index) {
     if (_answered) return;
-    HapticFeedback.lightImpact();
+    buzz(context, Buzz.light);
     setState(() => _selected = index);
   }
 
   void _confirmAnswer() {
     if (_selected < 0 || _answered) return;
     _questionTimer?.cancel();
-    HapticFeedback.mediumImpact();
+    buzz(context, Buzz.medium);
 
     final correct = _engine.answer(_selected, _remainingSeconds);
     setState(() {
@@ -182,7 +179,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   Future<void> _handleGameOver() async {
     _clock?.cancel();
     _questionTimer?.cancel();
-    HapticFeedback.heavyImpact();
+    buzz(context, Buzz.heavy);
 
     final summary = GameSummary(
       kind: GameKind.quiz,
@@ -346,8 +343,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
               _BottomAction(
                 answered: _answered,
                 hasSelection: _selected >= 0,
-                isLast:
-                    _engine.currentIndex >= _engine.questionCount - 1,
+                isLast: _engine.currentIndex >= _engine.questionCount - 1,
                 onConfirm: _confirmAnswer,
                 onNext: _nextQuestion,
               ),
@@ -380,10 +376,7 @@ class _QuizAppBar extends StatelessWidget {
     final urgent = seconds <= 5 && isTimerActive;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 4,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       decoration: const BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppColors.outlineVariant, width: 1),
@@ -392,18 +385,10 @@ class _QuizAppBar extends StatelessWidget {
       child: Row(
         children: [
           // Geri butonu
-          GestureDetector(
+          BackTapTarget(
             key: const ValueKey('quiz_back'),
             onTap: onBack,
-            child: Container(
-              height: AppSpacing.touchTarget,
-              width: AppSpacing.touchTarget,
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
+            color: AppColors.onSurfaceVariant,
           ),
 
           // Başlık
@@ -420,9 +405,7 @@ class _QuizAppBar extends StatelessWidget {
             duration: const Duration(milliseconds: 300),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: urgent
-                  ? AppColors.errorContainer
-                  : AppColors.primaryFixed,
+              color: urgent ? AppColors.errorContainer : AppColors.primaryFixed,
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
                 color: urgent ? AppColors.error : AppColors.foxOrange,
@@ -484,9 +467,7 @@ class _ProgressSection extends StatelessWidget {
           children: [
             Text(
               'Soru $current / $total',
-              style: AppText.labelLg.copyWith(
-                color: AppColors.secondary,
-              ),
+              style: AppText.labelLg.copyWith(color: AppColors.secondary),
             ),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -499,9 +480,7 @@ class _ProgressSection extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   '$points Puan',
-                  style: AppText.labelLg.copyWith(
-                    color: AppColors.secondary,
-                  ),
+                  style: AppText.labelLg.copyWith(color: AppColors.secondary),
                 ),
               ],
             ),
@@ -795,18 +774,14 @@ class _FeedbackBanner extends StatelessWidget {
                 Text(
                   correct ? 'Harika, doğru cevap! 🎉' : 'Doğru cevap:',
                   style: AppText.labelLg.copyWith(
-                    color: correct
-                        ? AppColors.leafGreen
-                        : AppColors.berryPink,
+                    color: correct ? AppColors.leafGreen : AppColors.berryPink,
                   ),
                 ),
                 if (!correct) ...[
                   const SizedBox(height: 4),
                   Text(
                     correctAnswer,
-                    style: AppText.labelLg.copyWith(
-                      color: AppColors.onSurface,
-                    ),
+                    style: AppText.labelLg.copyWith(color: AppColors.onSurface),
                   ),
                 ],
                 const SizedBox(height: 6),
@@ -851,9 +826,7 @@ class _BottomAction extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.md),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.md)),
       ),
       child: SafeArea(
         top: false,
@@ -866,9 +839,7 @@ class _BottomAction extends StatelessWidget {
           ),
           child: Squishy(
             key: ValueKey(answered ? 'quiz_next' : 'quiz_confirm'),
-            onTap: enabled
-                ? (answered ? onNext : onConfirm)
-                : null,
+            onTap: enabled ? (answered ? onNext : onConfirm) : null,
             color: enabled ? AppColors.foxOrange : AppColors.surfaceContainer,
             depthColor: enabled
                 ? AppColors.primary

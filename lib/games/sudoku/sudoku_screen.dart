@@ -1,3 +1,4 @@
+import '../../settings/haptics.dart';
 import 'dart:async';
 import 'dart:math';
 
@@ -131,7 +132,7 @@ class _SudokuScreenState extends State<SudokuScreen> {
         _hinted.remove(index);
         if (!_notes[index].remove(value)) _notes[index].add(value);
       });
-      HapticFeedback.selectionClick();
+      buzz(context, Buzz.selection);
       return;
     }
 
@@ -154,10 +155,10 @@ class _SudokuScreenState extends State<SudokuScreen> {
     });
 
     if (correct) {
-      HapticFeedback.selectionClick();
+      buzz(context, Buzz.selection);
       _checkCompletion();
     } else {
-      HapticFeedback.mediumImpact();
+      buzz(context, Buzz.medium);
       if (_score.failed) _handleGameOver();
     }
   }
@@ -173,7 +174,7 @@ class _SudokuScreenState extends State<SudokuScreen> {
       _notes[index].clear();
       _hinted.remove(index);
     });
-    HapticFeedback.selectionClick();
+    buzz(context, Buzz.selection);
   }
 
   /// Bir sayı yerleşince aynı satır/sütun/kutudaki notlardan düşülür.
@@ -300,14 +301,14 @@ class _SudokuScreenState extends State<SudokuScreen> {
     _ticker?.cancel();
     final bonus = _score.finish(difficulty: _difficulty, time: _elapsed);
     setState(() => _selected = null);
-    HapticFeedback.heavyImpact();
+    buzz(context, Buzz.heavy);
     _showRewardCard(bonus);
   }
 
   /// Hata hakkı bitti: tahta kilitlenir, kart kazanılmaz.
   Future<void> _handleGameOver() async {
     _ticker?.cancel();
-    HapticFeedback.heavyImpact();
+    buzz(context, Buzz.heavy);
     setState(() => _selected = null);
 
     final action = await showDialog<_GameOverAction>(
@@ -506,7 +507,11 @@ class _Header extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _RoundIconButton(icon: Icons.arrow_back_rounded, onTap: onBack),
+          _RoundIconButton(
+            icon: Icons.arrow_back_rounded,
+            onTap: onBack,
+            semanticLabel: 'Geri',
+          ),
           Expanded(
             child: Column(
               children: [
@@ -552,24 +557,35 @@ class _Header extends StatelessWidget {
 }
 
 class _RoundIconButton extends StatelessWidget {
-  const _RoundIconButton({required this.icon, required this.onTap});
+  const _RoundIconButton({
+    required this.icon,
+    required this.onTap,
+    required this.semanticLabel,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
 
+  /// İçinde yazı yok; adı ekran okuyucuya buradan söylenir.
+  final String semanticLabel;
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: AppSpacing.touchTarget,
-        width: AppSpacing.touchTarget,
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainer,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.outlineVariant, width: 2),
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: AppSpacing.touchTarget,
+          width: AppSpacing.touchTarget,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainer,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.outlineVariant, width: 2),
+          ),
+          child: Icon(icon, color: AppColors.primary),
         ),
-        child: Icon(icon, color: AppColors.primary),
       ),
     );
   }

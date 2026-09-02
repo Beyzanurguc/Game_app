@@ -42,7 +42,10 @@ class FirestoreCardRepository implements CardRepository {
       });
 
       // Başlıksız kart albümde boş kutu olarak görünürdü; onu hiç almayalım.
-      return [for (final card in cards) if (card.title.isNotEmpty) card];
+      return [
+        for (final card in cards)
+          if (card.title.isNotEmpty) card,
+      ];
     } catch (error) {
       debugPrint('Kartlar okunamadı: $error');
       return const [];

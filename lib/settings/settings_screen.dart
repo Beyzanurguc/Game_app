@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../firebase/session_scope.dart';
 import '../profile/fox_avatar.dart';
 import '../profile/player_profile.dart';
 import '../theme/app_theme.dart';
@@ -72,9 +73,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
   }
 
+  /// Çıkışı onaylatır ve onaylanırsa oturumu kapatır.
+  ///
+  /// Anonim hesapta çıkış geri alınamadığı için önce ne kaybedileceğini
+  /// anlatan bir pencere gösterilir.
+  Future<void> _confirmSignOut() async {
+    final session = SessionScope.maybeOf(context);
+    if (session == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => const _SignOutDialog(),
+    );
+    if (confirmed != true || !mounted) return;
+
+    // Çıkış tüm widget ağacını baştan kurar; bu sayfa önce kapanmalı.
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) navigator.pop();
+    await session.onSignOut();
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = AppSettingsScope.of(context);
+    // Çıkış açılış akışını yeniden çalıştırmayı gerektirir; kapsam yoksa
+    // (testler, önizleme) düğme hiç gösterilmez.
+    final canSignOut = SessionScope.maybeOf(context) != null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -101,6 +125,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         playsToday: settings.playsToday,
                         onChanged: (value) => setState(() => _limit = value),
                       ),
+                      const SizedBox(height: AppSpacing.base * 2),
+                      _HapticsCard(
+                        enabled: settings.hapticsEnabled,
+                        onChanged: settings.updateHaptics,
+                      ),
+                      if (canSignOut) ...[
+                        const SizedBox(height: AppSpacing.base * 2),
+                        _SignOutCard(onSignOut: _confirmSignOut),
+                      ],
                     ],
                   ),
                 ),
@@ -126,18 +159,10 @@ class _SettingsHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 4, AppSpacing.marginMobile, 12),
       child: Row(
         children: [
-          GestureDetector(
+          BackTapTarget(
             key: const ValueKey('settings_back'),
             onTap: onBack,
-            child: Container(
-              height: AppSpacing.touchTarget,
-              width: AppSpacing.touchTarget,
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppColors.primary,
-              ),
-            ),
+            color: AppColors.primary,
           ),
           Expanded(
             child: Text(
@@ -305,6 +330,198 @@ class _TodayNote extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Titreşim anahtarı.
+///
+/// Diğer ayarların aksine kaydet düğmesini beklemez: anahtarı çevirmenin
+/// etkisi hemen hissedilsin diye anında yazılır.
+class _HapticsCard extends StatelessWidget {
+  const _HapticsCard({required this.enabled, required this.onChanged});
+
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DepthBox(
+      color: AppColors.surfaceContainerLowest,
+      depthColor: AppColors.surfaceContainerHighest,
+      borderColor: AppColors.plum,
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.fromLTRB(18, 14, 12, 14),
+      child: Row(
+        children: [
+          const Icon(Icons.vibration_rounded, color: AppColors.plum, size: 22),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Titreşim',
+                  style: AppText.titleMd.copyWith(color: AppColors.plum),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Oyunlarda dokunma ve doğru cevap titreşimleri.',
+                  style: AppText.bodyMd.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            key: const ValueKey('settings_haptics'),
+            value: enabled,
+            onChanged: onChanged,
+            activeThumbColor: Colors.white,
+            activeTrackColor: AppColors.plum,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Çıkış kutusu — oturumu kapatır ve uygulamayı giriş sayfasına döndürür.
+///
+/// Bilerek en alta, kaydetme alanının dışına konuldu: sık kullanılan bir şey
+/// değil ve yanlışlıkla dokunulması istenmiyor.
+class _SignOutCard extends StatelessWidget {
+  const _SignOutCard({required this.onSignOut});
+
+  final VoidCallback onSignOut;
+
+  @override
+  Widget build(BuildContext context) {
+    return DepthBox(
+      color: AppColors.errorContainer,
+      depthColor: AppColors.surfaceContainerHighest,
+      borderColor: AppColors.error,
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.logout_rounded,
+                color: AppColors.onErrorContainer,
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Çıkış',
+                  style: AppText.titleMd.copyWith(
+                    color: AppColors.onErrorContainer,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Oturumu kapatır ve uygulamayı ilk açılıştaki hâline döndürür. '
+            'Toplanan kartlar, yıldızlar ve tilkinin aksesuarları silinir.',
+            style: AppText.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
+          ),
+          const SizedBox(height: 14),
+          Squishy(
+            key: const ValueKey('settings_sign_out'),
+            onTap: onSignOut,
+            color: AppColors.error,
+            depthColor: AppColors.onErrorContainer,
+            radius: AppRadius.md,
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            child: Center(
+              child: Text(
+                'ÇIKIŞ YAP',
+                style: AppText.labelLg.copyWith(color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Çıkış onayı — ne kaybedileceğini açıkça söyler.
+///
+/// `true` ile kapanırsa oturum kapatılır; başka her durumda hiçbir şey olmaz.
+class _SignOutDialog extends StatelessWidget {
+  const _SignOutDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(AppSpacing.gutter),
+      child: DepthBox(
+        color: AppColors.creamBg,
+        depthColor: AppColors.surfaceContainerHighest,
+        borderColor: AppColors.error,
+        radius: AppRadius.lg,
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Mascot(size: 100, mood: MascotMood.sad),
+            const SizedBox(height: 10),
+            Text(
+              'Çıkış yapılsın mı?',
+              textAlign: TextAlign.center,
+              style: AppText.headlineMd.copyWith(
+                color: AppColors.onErrorContainer,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Bu hesap yalnızca bu cihaza ait; çıkınca geri alınamaz. '
+              'Toplanan kartlar, yıldızlar, rozetler ve aksesuarlar kalıcı '
+              'olarak kaybolur ve her şey sıfırdan başlar.',
+              textAlign: TextAlign.center,
+              style: AppText.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
+            ),
+            const SizedBox(height: 20),
+            Squishy(
+              key: const ValueKey('settings_sign_out_cancel'),
+              onTap: () => Navigator.of(context).pop(false),
+              color: AppColors.foxOrange,
+              depthColor: AppColors.primary,
+              radius: AppRadius.md,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              child: Center(
+                child: Text(
+                  'VAZGEÇ',
+                  style: AppText.labelLg.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Squishy(
+              key: const ValueKey('settings_sign_out_confirm'),
+              onTap: () => Navigator.of(context).pop(true),
+              color: AppColors.error,
+              depthColor: AppColors.onErrorContainer,
+              radius: AppRadius.md,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              child: Center(
+                child: Text(
+                  'EVET, ÇIKIŞ YAP',
+                  style: AppText.labelLg.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

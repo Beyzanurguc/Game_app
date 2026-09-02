@@ -25,17 +25,9 @@ class CardDetailScreen extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(8, 4, 16, 4),
                   child: Row(
                     children: [
-                      GestureDetector(
+                      BackTapTarget(
                         onTap: () => Navigator.of(context).pop(),
-                        child: Container(
-                          height: AppSpacing.touchTarget,
-                          width: AppSpacing.touchTarget,
-                          alignment: Alignment.center,
-                          child: const Icon(
-                            Icons.arrow_back_rounded,
-                            color: AppColors.primary,
-                          ),
-                        ),
+                        color: AppColors.primary,
                       ),
                       const Spacer(),
                       CategoryChip(category: card.category),

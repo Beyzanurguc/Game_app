@@ -1,7 +1,7 @@
+import '../../settings/haptics.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../cards/card_collection.dart';
 import '../../cards/reward_card_screen.dart';
@@ -107,7 +107,7 @@ class _YapbozScreenState extends State<YapbozScreen> {
     final moved = engine.revealOne();
     if (moved == null) return;
 
-    HapticFeedback.lightImpact();
+    buzz(context, Buzz.light);
     setState(() => _hintsLeft--);
     _checkSolved();
   }
@@ -128,7 +128,7 @@ class _YapbozScreenState extends State<YapbozScreen> {
     if (engine == null || setup == null) return;
 
     _clock?.cancel();
-    HapticFeedback.heavyImpact();
+    buzz(context, Buzz.heavy);
 
     final summary = GameSummary(
       kind: GameKind.yapboz,
@@ -235,8 +235,8 @@ class _YapbozScreenState extends State<YapbozScreen> {
     setState(() {
       if (slot != null) {
         final correct = engine.place(piece, slot);
-        HapticFeedback.selectionClick();
-        if (correct) HapticFeedback.mediumImpact();
+        buzz(context, Buzz.selection);
+        if (correct) buzz(context, Buzz.medium);
       } else if (_dragFromSlot != null) {
         // Tahtanın dışına bırakıldı: parça tepsiye döner.
         engine.returnToTray(_dragFromSlot!);
@@ -443,8 +443,7 @@ class _YapbozScreenState extends State<YapbozScreen> {
                           ? Icons.visibility_off_rounded
                           : Icons.visibility_rounded,
                       label: _showPreview ? 'Resmi gizle' : 'Resmi göster',
-                      onTap: () =>
-                          setState(() => _showPreview = !_showPreview),
+                      onTap: () => setState(() => _showPreview = !_showPreview),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -626,9 +625,7 @@ class _PieceTray extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.md),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.md)),
       ),
       child: SafeArea(
         top: false,
@@ -724,18 +721,10 @@ class _YapbozAppBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          GestureDetector(
+          BackTapTarget(
             key: const ValueKey('yapboz_back'),
             onTap: onBack,
-            child: Container(
-              height: AppSpacing.touchTarget,
-              width: AppSpacing.touchTarget,
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
+            color: AppColors.onSurfaceVariant,
           ),
           Expanded(
             child: Text(
@@ -934,10 +923,7 @@ class _PuzzlesUnavailable extends StatelessWidget {
             color: AppColors.foxOrange,
             depthColor: AppColors.primary,
             radius: AppRadius.md,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 32,
-              vertical: 14,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
             child: Text(
               'GERİ DÖN',
               style: AppText.labelLg.copyWith(color: Colors.white),

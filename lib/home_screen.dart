@@ -16,6 +16,7 @@ import 'profile/fox_workshop_screen.dart';
 import 'profile/player_profile.dart';
 import 'settings/app_settings.dart';
 import 'settings/daily_limit_dialog.dart';
+import 'settings/parent_gate.dart';
 import 'settings/settings_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/squishy.dart';
@@ -204,8 +205,14 @@ class _HomeScreenState extends State<HomeScreen> {
     await _celebrateNewBadges();
   }
 
-  void _openSettings() {
-    Navigator.of(
+  /// Ayarları yetişkin kapısının arkasından açar.
+  ///
+  /// Sayfa günlük oyun hakkını ve çıkış düğmesini barındırıyor; ikisi de
+  /// çocuğun kendi başına ulaşmaması gereken şeyler.
+  Future<void> _openSettings() async {
+    if (!await showParentGate(context) || !mounted) return;
+
+    await Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => const SettingsScreen()));
   }

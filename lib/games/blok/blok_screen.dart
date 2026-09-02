@@ -1,10 +1,10 @@
+import '../../settings/haptics.dart';
 import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../cards/card_collection.dart';
 import '../../cards/reward_card_screen.dart';
@@ -144,7 +144,7 @@ class _BlokScreenState extends State<BlokScreen> {
   void _placePiece(int index, int row, int col) {
     final result = _game.place(index, row, col);
     if (result == null) {
-      HapticFeedback.selectionClick();
+      buzz(context, Buzz.selection);
       return;
     }
 
@@ -154,11 +154,11 @@ class _BlokScreenState extends State<BlokScreen> {
     });
 
     if (result.clearedLines > 0) {
-      HapticFeedback.mediumImpact();
+      buzz(context, Buzz.medium);
       _showFlash(result.clearedCells);
       _celebrate(_celebrationText(result));
     } else {
-      HapticFeedback.selectionClick();
+      buzz(context, Buzz.selection);
     }
 
     if (_game.over) _handleGameOver();
@@ -192,7 +192,7 @@ class _BlokScreenState extends State<BlokScreen> {
   void _tapPiece(int index) {
     if (_game.over || _paused || _game.tray[index] == null) return;
     setState(() => _selected = _selected == index ? null : index);
-    HapticFeedback.selectionClick();
+    buzz(context, Buzz.selection);
   }
 
   /// Seçili parça, dokunulan hücre ortasına gelecek şekilde konur.
@@ -378,7 +378,7 @@ class _BlokScreenState extends State<BlokScreen> {
 
   Future<void> _handleGameOver() async {
     _clock?.cancel();
-    HapticFeedback.heavyImpact();
+    buzz(context, Buzz.heavy);
 
     final summary = GameSummary(
       kind: GameKind.blok,
@@ -561,6 +561,7 @@ class _Header extends StatelessWidget {
           icon: Icons.arrow_back_rounded,
           onTap: onBack,
           keyValue: 'blok_back',
+          semanticLabel: 'Geri',
         ),
         Expanded(
           child: Center(
@@ -615,6 +616,7 @@ class _Header extends StatelessWidget {
           icon: Icons.pause_rounded,
           onTap: onPause,
           keyValue: 'blok_pause',
+          semanticLabel: 'Duraklat',
         ),
       ],
     );
@@ -626,26 +628,34 @@ class _RoundButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     required this.keyValue,
+    required this.semanticLabel,
   });
 
   final IconData icon;
   final VoidCallback onTap;
   final String keyValue;
 
+  /// İçinde yazı yok; adı ekran okuyucuya buradan söylenir.
+  final String semanticLabel;
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      key: ValueKey(keyValue),
-      onTap: onTap,
-      child: Container(
-        height: AppSpacing.touchTarget,
-        width: AppSpacing.touchTarget,
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainer,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.outlineVariant, width: 2),
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      child: GestureDetector(
+        key: ValueKey(keyValue),
+        onTap: onTap,
+        child: Container(
+          height: AppSpacing.touchTarget,
+          width: AppSpacing.touchTarget,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainer,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.outlineVariant, width: 2),
+          ),
+          child: Icon(icon, color: AppColors.primary),
         ),
-        child: Icon(icon, color: AppColors.primary),
       ),
     );
   }

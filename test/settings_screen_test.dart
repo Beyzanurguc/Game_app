@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:game_app/firebase/session_scope.dart';
 import 'package:game_app/settings/app_settings.dart';
 import 'package:game_app/settings/settings_screen.dart';
 import 'package:game_app/settings/settings_storage.dart';
@@ -7,16 +8,28 @@ import 'package:game_app/settings/settings_storage.dart';
 import 'helpers.dart';
 
 /// Ayarlar sayfasını telefon boyutunda açar.
+///
+/// [onSignOut] verilirse sayfa bir [SessionScope] içinde kurulur; çıkış
+/// düğmesi ancak o zaman görünür.
 Future<AppSettings> pumpSettings(
   WidgetTester tester, {
   AppSettings? settings,
+  Future<void> Function()? onSignOut,
 }) async {
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
   final target = settings ?? testSettings();
-  await tester.pumpWidget(wrapApp(const SettingsScreen(), settings: target));
+  const screen = SettingsScreen();
+  await tester.pumpWidget(
+    wrapApp(
+      onSignOut == null
+          ? screen
+          : SessionScope(onSignOut: onSignOut, child: screen),
+      settings: target,
+    ),
+  );
   await tester.pumpAndSettle();
   return target;
 }
@@ -24,6 +37,12 @@ Future<AppSettings> pumpSettings(
 Finder get _nameField => find.byKey(const ValueKey('settings_name'));
 Finder get _slider => find.byKey(const ValueKey('settings_limit_slider'));
 Finder get _saveButton => find.byKey(const ValueKey('settings_save'));
+Finder get _haptics => find.byKey(const ValueKey('settings_haptics'));
+Finder get _signOutButton => find.byKey(const ValueKey('settings_sign_out'));
+Finder get _signOutCancel =>
+    find.byKey(const ValueKey('settings_sign_out_cancel'));
+Finder get _signOutConfirm =>
+    find.byKey(const ValueKey('settings_sign_out_confirm'));
 
 void main() {
   group('AppSettings güncelleme', () {
@@ -210,6 +229,81 @@ void main() {
         find.textContaining('bu sınırla bugünlük hak biter'),
         findsOneWidget,
       );
+    });
+  });
+
+  group('Titreşim anahtarı', () {
+    testWidgets('kayıtlı değerle açılır', (tester) async {
+      await pumpSettings(tester, settings: testSettings(hapticsEnabled: false));
+
+      expect(tester.widget<Switch>(_haptics).value, isFalse);
+    });
+
+    testWidgets('kaydet beklenmeden anında uygulanır', (tester) async {
+      final storage = MemorySettingsStorage();
+      final settings = await pumpSettings(
+        tester,
+        settings: testSettings(hapticsEnabled: true, storage: storage),
+      );
+
+      await tester.tap(_haptics);
+      await tester.pumpAndSettle();
+      await settings.pending;
+
+      expect(settings.hapticsEnabled, isFalse);
+      expect(storage.current.hapticsEnabled, isFalse);
+      expect(tester.widget<Switch>(_haptics).value, isFalse);
+    });
+  });
+
+  group('Çıkış', () {
+    testWidgets('oturum kapsamı yoksa düğme gösterilmez', (tester) async {
+      await pumpSettings(tester);
+
+      expect(_signOutButton, findsNothing);
+    });
+
+    testWidgets('onaylanmadan çıkış yapılmaz', (tester) async {
+      var signOuts = 0;
+      await pumpSettings(tester, onSignOut: () async => signOuts++);
+
+      // Ad kutusunun kendi kaydırıcısı da var; sayfanın listesi ilk sırada.
+      await tester.scrollUntilVisible(
+        _signOutButton,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(_signOutButton);
+      await tester.pumpAndSettle();
+
+      expect(_signOutConfirm, findsOneWidget);
+
+      await tester.tap(_signOutCancel);
+      await tester.pumpAndSettle();
+
+      expect(signOuts, 0);
+      expect(_signOutConfirm, findsNothing);
+    });
+
+    testWidgets('onaylanınca oturum kapatılır', (tester) async {
+      var signOuts = 0;
+      await pumpSettings(tester, onSignOut: () async => signOuts++);
+
+      // Ad kutusunun kendi kaydırıcısı da var; sayfanın listesi ilk sırada.
+      await tester.scrollUntilVisible(
+        _signOutButton,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(_signOutButton);
+      await tester.pumpAndSettle();
+
+      await tester.tap(_signOutConfirm);
+      await tester.pumpAndSettle();
+
+      expect(signOuts, 1);
     });
   });
 }

@@ -1,17 +1,76 @@
-# game_app
+# Foxy
 
-A new Flutter project.
+Çocuklar için bulmaca oyunları ve bilgi kartı albümü. Flutter ile yazıldı;
+ilerleme Firebase (anonim giriş + Firestore) üzerinde tutulur.
 
-## Getting Started
+## İçerik
 
-This project is a starting point for a Flutter application.
+- **Oyunlar:** Tetris, Sudoku, Blok Patlat, Quiz, Yapboz
+- **Bilgi kartları:** Oyun bitince kart kazanılır, albümde toplanır
+- **Rozetler ve tilki atölyesi:** Yıldızlarla aksesuar alınıp maskota takılır
+- **Ebeveyn ayarları:** Günlük oyun hakkı, titreşim, çıkış — yetişkin kapısının
+  arkasında
 
-A few resources to get you started if this is your first Flutter project:
+## Geliştirme
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter pub get
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Testler ve statik analiz:
+
+```bash
+flutter test
+```
+
+```bash
+flutter analyze
+```
+
+Uygulama ikonunu yeniden üretmek için:
+
+```bash
+dart run flutter_launcher_icons
+```
+
+## Firebase
+
+Proje: `foxy-f429b`. Bilgi kartları ve yapbozlar Firestore'da tutulduğu için
+ilk açılışta internet gerekir.
+
+- Android yapılandırması `android/app/google-services.json` içinde ve depoda.
+- **iOS eksik:** `ios/Runner/GoogleService-Info.plist` yok. Firebase konsolundan
+  indirilip Xcode ile Runner hedefine eklenmeli, yoksa iOS derlemesi Firebase'e
+  bağlanamaz.
+- Firestore kuralları `firestore.rules` içinde; içerik yalnızca oturum açmış
+  kullanıcılarca okunur, istemci hiçbir koşulda yazamaz.
+- İçerik yüklemek için `tools/seed_firestore.js` (servis hesabı anahtarı ister;
+  anahtarlar `.gitignore`'da).
+
+## Yayın derlemesi (Android)
+
+Release derlemesi `android/key.properties` varsa onunla, yoksa debug anahtarıyla
+imzalanır. Play Store'a yüklenecek derleme için anahtar deposu gerekir:
+
+```bash
+keytool -genkey -v -keystore ~/foxy-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias foxy
+```
+
+Sonra `android/key.properties` dosyasını oluştur (bu dosya `.gitignore`'da,
+depoya girmez):
+
+```properties
+storeFile=C:/Users/<kullanici>/foxy-release.jks
+storePassword=<parola>
+keyAlias=foxy
+keyPassword=<parola>
+```
+
+```bash
+flutter build appbundle --release
+```
+
+**Yayından önce:** `applicationId` hâlâ `com.example.game_app`. Play Store bu
+öneki kabul etmez; değiştirildiğinde Firebase konsolunda yeni paket adıyla bir
+Android uygulaması kaydedilip `google-services.json` yenilenmeli.

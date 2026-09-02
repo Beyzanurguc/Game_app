@@ -44,6 +44,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Yayın imzası anahtarları — asla depoya girmemeli
+/android/key.properties
+*.jks
+*.keystore
+
 # Firebase servis hesabı anahtarları — asla depoya girmemeli
 *serviceAccount*.json
 *-adminsdk-*.json

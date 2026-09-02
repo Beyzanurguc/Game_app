@@ -57,18 +57,10 @@ class _YapbozSetupViewState extends State<YapbozSetupView> {
           ),
           child: Row(
             children: [
-              GestureDetector(
+              BackTapTarget(
                 key: const ValueKey('yapboz_setup_back'),
                 onTap: widget.onBack,
-                child: Container(
-                  height: AppSpacing.touchTarget,
-                  width: AppSpacing.touchTarget,
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.arrow_back_rounded,
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
+                color: AppColors.onSurfaceVariant,
               ),
               Expanded(
                 child: Text(
@@ -123,13 +115,12 @@ class _YapbozSetupViewState extends State<YapbozSetupView> {
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.86,
-                    ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.86,
+                ),
                 itemCount: widget.pictures.length,
                 itemBuilder: (context, index) {
                   final picture = widget.pictures[index];
@@ -178,9 +169,10 @@ class _YapbozSetupViewState extends State<YapbozSetupView> {
               ),
               child: Squishy(
                 key: const ValueKey('yapboz_start'),
-                onTap: () => widget.onStart(
-                  (picture: _picture, difficulty: _difficulty),
-                ),
+                onTap: () => widget.onStart((
+                  picture: _picture,
+                  difficulty: _difficulty,
+                )),
                 color: AppColors.foxOrange,
                 depthColor: AppColors.primary,
                 radius: AppRadius.md,
@@ -269,7 +261,11 @@ class _PictureTile extends StatelessWidget {
 /// görsel önbelleği JPEG'i bir kez çözer; 25 parçalık tahtada bile tek çözme
 /// yapılır. Görsel yoksa oyun çökmez, yer tutucu çizilir.
 class PuzzleImage extends StatelessWidget {
-  const PuzzleImage({super.key, required this.picture, this.fit = BoxFit.cover});
+  const PuzzleImage({
+    super.key,
+    required this.picture,
+    this.fit = BoxFit.cover,
+  });
 
   final PuzzlePicture picture;
   final BoxFit fit;
@@ -290,9 +286,7 @@ class PuzzleImage extends StatelessWidget {
 
   Widget _placeholder() => ColoredBox(
     color: picture.accent.withValues(alpha: 0.25),
-    child: Center(
-      child: Icon(picture.icon, color: picture.accent, size: 32),
-    ),
+    child: Center(child: Icon(picture.icon, color: picture.accent, size: 32)),
   );
 }
 

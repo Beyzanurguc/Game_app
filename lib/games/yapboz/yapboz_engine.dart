@@ -26,10 +26,8 @@ enum YapbozDifficulty {
 ///
 /// Motor görselden habersizdir: hangi resmin kullanıldığı ekranın bileceği iş.
 class YapbozEngine {
-  YapbozEngine({
-    required this.difficulty,
-    Random? random,
-  }) : _random = random ?? Random() {
+  YapbozEngine({required this.difficulty, Random? random})
+    : _random = random ?? Random() {
     _slots = List<int?>.filled(slotCount, null);
     _tray = List<int>.generate(slotCount, (i) => i);
     _shuffleTray();
@@ -98,7 +96,10 @@ class YapbozEngine {
   /// Dönen değer: parça doğru yuvasına mı kondu?
   bool place(int pieceId, int slotIndex) {
     assert(pieceId >= 0 && pieceId < slotCount, 'geçersiz parça: $pieceId');
-    assert(slotIndex >= 0 && slotIndex < slotCount, 'geçersiz yuva: $slotIndex');
+    assert(
+      slotIndex >= 0 && slotIndex < slotCount,
+      'geçersiz yuva: $slotIndex',
+    );
 
     final from = slotOf(pieceId);
     if (from == slotIndex) return isSlotCorrect(slotIndex);

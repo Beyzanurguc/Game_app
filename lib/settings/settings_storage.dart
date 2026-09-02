@@ -21,6 +21,7 @@ class StoredSettings {
   const StoredSettings({
     this.childName = '',
     this.dailyGameLimit = defaultDailyGameLimit,
+    this.hapticsEnabled = true,
     this.onboarded = false,
     this.playDate = '',
     this.playsToday = 0,
@@ -31,6 +32,9 @@ class StoredSettings {
 
   /// Günde başlanabilecek en fazla tur sayısı.
   final int dailyGameLimit;
+
+  /// Oyunlardaki titreşim geri bildirimi açık mı? Varsayılan açık.
+  final bool hapticsEnabled;
 
   /// Giriş sayfası tamamlandı mı? False ise uygulama oraya açılır.
   final bool onboarded;
@@ -44,12 +48,14 @@ class StoredSettings {
   StoredSettings copyWith({
     String? childName,
     int? dailyGameLimit,
+    bool? hapticsEnabled,
     bool? onboarded,
     String? playDate,
     int? playsToday,
   }) => StoredSettings(
     childName: childName ?? this.childName,
     dailyGameLimit: dailyGameLimit ?? this.dailyGameLimit,
+    hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
     onboarded: onboarded ?? this.onboarded,
     playDate: playDate ?? this.playDate,
     playsToday: playsToday ?? this.playsToday,
@@ -58,6 +64,7 @@ class StoredSettings {
   Map<String, dynamic> toJson() => {
     'name': childName,
     'limit': dailyGameLimit,
+    'haptics': hapticsEnabled,
     'onboarded': onboarded,
     'playDate': playDate,
     'plays': playsToday,
@@ -66,6 +73,8 @@ class StoredSettings {
   static StoredSettings fromJson(Map<String, dynamic> json) => StoredSettings(
     childName: json['name'] is String ? json['name'] as String : '',
     dailyGameLimit: _limit(json['limit']),
+    // Ayar eklenmeden önce kaydedilmiş dosyalarda alan yok; açık sayılır.
+    hapticsEnabled: json['haptics'] is bool ? json['haptics'] as bool : true,
     onboarded: json['onboarded'] == true,
     playDate: json['playDate'] is String ? json['playDate'] as String : '',
     playsToday: json['plays'] is int ? json['plays'] as int : 0,

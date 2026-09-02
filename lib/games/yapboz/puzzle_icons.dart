@@ -26,5 +26,4 @@ const Map<String, IconData> puzzleIcons = {
 /// Anahtarı olmayan ya da tanınmayan yapbozun simgesi.
 const IconData fallbackPuzzleIcon = Icons.extension_rounded;
 
-IconData puzzleIconFor(Object? key) =>
-    puzzleIcons[key] ?? fallbackPuzzleIcon;
+IconData puzzleIconFor(Object? key) => puzzleIcons[key] ?? fallbackPuzzleIcon;
